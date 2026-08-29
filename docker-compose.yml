@@ -1,0 +1,166 @@
+version: '3.8'
+
+services:
+  # API FastAPI
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: transfer-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:///gestion_transfert.db
+      DB_PATH: /app/data/gestion_transfert.db
+      API_KEY: ${API_KEY}
+      PAYPAL_SECRET: ${PAYPAL_SECRET}
+      STRIPE_SECRET: ${STRIPE_SECRET}
+      MTN_API_KEY: ${MTN_API_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      HOST: 0.0.0.0
+      PORT: 8000
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - transfer-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache (optionnel mais recommandé)
+  redis:
+    image: redis:7-alpine
+    container_name: transfer-redis
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - transfer-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL (optionnel - pour production)
+  postgres:
+    image: postgres:15-alpine
+    container_name: transfer-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: transfer_platform
+      POSTGRES_USER: ${DB_USER:-transfer}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - transfer-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transfer"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: transfer-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - transfer-network
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Monitoring avec Prometheus (optionnel)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: transfer-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - transfer-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana pour visualisation
+  grafana:
+    image: grafana/grafana:latest
+    container_name: transfer-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INSTALL_PLUGINS: redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - transfer-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  transfer-network:
+    driver: bridge
+
+# Pour démarrer:
+# docker-compose up -d
+#
+# Pour démarrer avec monitoring:
+# docker-compose --profile monitoring up -d
+#
+# Pour production (avec PostgreSQL):
+# docker-compose --profile production up -d
+#
+# Pour arrêter:
+# docker-compose down
+#
+# Pour voir les logs:
+# docker-compose logs -f api
+#
+# Pour entrer dans l'API:
+# docker-compose exec api bash
