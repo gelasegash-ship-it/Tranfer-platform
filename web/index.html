@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TRANSFER Platform</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: linear-gradient(180deg, #0f172a, #1e3a8a, #0f172a);
+    color: white;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 480px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 2rem; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #93c5fd; font-size: 0.85rem; margin-bottom: 24px; }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .balance { font-size: 2rem; font-weight: bold; margin: 8px 0; }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(59,130,246,0.4);
+    background: rgba(0,0,0,0.3);
+    color: white;
+    font-size: 1rem;
+  }
+  button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+  button:disabled { opacity: 0.5; }
+  button.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .tab.active { background: #3b82f6; }
+  .hidden { display: none; }
+  .msg { padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; }
+  .msg.success { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); }
+  .msg.error { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); }
+  .txn { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; font-size: 0.85rem; }
+  .settings-toggle { text-align: center; font-size: 0.75rem; color: #93c5fd; margin-top: 20px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>💸 TRANSFER</h1>
+  <p class="subtitle">Money moves fast • We move faster</p>
+
+  <div class="card">
+    <div style="font-size:0.85rem;color:#93c5fd;">Numéro MTN de test</div>
+    <input id="numeroMtn" placeholder="Ex: 243777000000" value="243777000000">
+    <button onclick="chargerCompte()">🔍 Charger le compte</button>
+  </div>
+
+  <div id="msgBox"></div>
+
+  <div id="compteInfo" class="card hidden">
+    <div style="font-size:0.85rem;color:#93c5fd;">Solde disponible</div>
+    <div class="balance" id="soldeAffiche">-- XAF</div>
+    <div style="font-size:0.8rem;color:#94a3b8;" id="nomAffiche"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('creer')" id="tab-creer">Créer compte</div>
+    <div class="tab" onclick="switchTab('transfert')" id="tab-transfert">Transfert</div>
+    <div class="tab" onclick="switchTab('retrait')" id="tab-retrait">Retrait</div>
+    <div class="tab" onclick="switchTab('historique')" id="tab-historique">Historique</div>
+  </div>
+
+  <div id="panel-creer" class="card">
+    <input id="creerNom" placeholder="Nom complet">
+    <input id="creerNumero" placeholder="Numéro MTN">
+    <select id="creerType">
+      <option value="CLIENT">Client</option>
+      <option value="AGENT">Agent</option>
+    </select>
+    <input id="creerSolde" placeholder="Solde initial (optionnel)" type="number">
+    <button onclick="creerCompte()">➕ Créer le compte</button>
+  </div>
+
+  <div id="panel-transfert" class="card hidden">
+    <input id="transfertAgent" placeholder="Numéro MTN Agent (expéditeur)">
+    <input id="transfertClient" placeholder="Numéro MTN Client (destinataire)">
+    <input id="transfertMontant" placeholder="Montant" type="number">
+    <button onclick="effectuerTransfert()">📤 Envoyer</button>
+  </div>
+
+  <div id="panel-retrait" class="card hidden">
+    <input id="retraitClient" placeholder="Numéro MTN Client (expéditeur)">
+    <input id="retraitAgent" placeholder="Numéro MTN Agent (destinataire)">
+    <input id="retraitMontant" placeholder="Montant" type="number">
+    <button onclick="effectuerRetrait()">💳 Retirer</button>
+  </div>
+
+  <div id="panel-historique" class="card hidden">
+    <div id="historiqueList">Charge un compte d'abord.</div>
+  </div>
+
+  <div class="settings-toggle" onclick="toggleSettings()">⚙️ Configurer l'URL de l'API / clé</div>
+  <div id="settingsPanel" class="card hidden">
+    <div style="font-size:0.8rem;color:#93c5fd;margin-bottom:8px;">URL de l'API</div>
+    <input id="apiUrl" value="https://tranfer-platform-api.onrender.com">
+    <div style="font-size:0.8rem;color:#93c5fd;margin-bottom:8px;">Clé API (X-API-Key)</div>
+    <input id="apiKey" value="transfer-secret-key-a-changer">
+    <button onclick="sauverConfig()">💾 Sauvegarder</button>
+  </div>
+</div>
+
+<script>
+let API_URL = localStorage.getItem('apiUrl') || 'https://tranfer-platform-api.onrender.com';
+let API_KEY = localStorage.getItem('apiKey') || 'transfer-secret-key-a-changer';
+document.getElementById('apiUrl').value = API_URL;
+document.getElementById('apiKey').value = API_KEY;
+
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('hidden');
+}
+
+function sauverConfig() {
+  API_URL = document.getElementById('apiUrl').value.trim();
+  API_KEY = document.getElementById('apiKey').value.trim();
+  localStorage.setItem('apiUrl', API_URL);
+  localStorage.setItem('apiKey', API_KEY);
+  showMsg('Configuration sauvegardée', 'success');
+}
+
+function showMsg(text, type) {
+  const box = document.getElementById('msgBox');
+  box.innerHTML = `<div class="msg ${type}">${text}</div>`;
+  setTimeout(() => { box.innerHTML = ''; }, 5000);
+}
+
+function switchTab(name) {
+  ['creer','transfert','retrait','historique'].forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'historique') chargerHistorique();
+}
+
+async function apiCall(path, method = 'GET', body = null, needsKey = false) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (needsKey) headers['X-API-Key'] = API_KEY;
+  const options = { method, headers };
+  if (body) options.body = JSON.stringify(body);
+  const res = await fetch(API_URL + path, options);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.detail || 'Erreur inconnue');
+  return data;
+}
+
+async function chargerCompte() {
+  const numero = document.getElementById('numeroMtn').value.trim();
+  if (!numero) return showMsg('Entre un numéro MTN', 'error');
+  try {
+    const compte = await apiCall(`/api/comptes/${numero}`);
+    document.getElementById('compteInfo').classList.remove('hidden');
+    document.getElementById('soldeAffiche').textContent =
+      new Intl.NumberFormat('fr-FR').format(compte.solde) + ' XAF';
+    document.getElementById('nomAffiche').textContent =
+      `${compte.nom} • ${compte.type_compte}`;
+    showMsg('Compte chargé', 'success');
+  } catch (e) {
+    document.getElementById('compteInfo').classList.add('hidden');
+    showMsg(e.message.includes('non trouvé') ? 'Ce compte n\'existe pas encore — crée-le dans l\'onglet "Créer compte"' : e.message, 'error');
+  }
+}
+
+async function creerCompte() {
+  const nom = document.getElementById('creerNom').value.trim();
+  const numero = document.getElementById('creerNumero').value.trim();
+  const type_compte = document.getElementById('creerType').value;
+  const solde_initial = parseFloat(document.getElementById('creerSolde').value) || 0;
+  if (!nom || !numero) return showMsg('Nom et numéro requis', 'error');
+  try {
+    await apiCall('/api/comptes', 'POST', { numero_mtn: numero, nom, type_compte, solde_initial }, true);
+    showMsg(`Compte créé pour ${nom}`, 'success');
+    document.getElementById('numeroMtn').value = numero;
+    chargerCompte();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function effectuerTransfert() {
+  const numero_mtn_agent = document.getElementById('transfertAgent').value.trim();
+  const numero_mtn_client = document.getElementById('transfertClient').value.trim();
+  const montant = parseFloat(document.getElementById('transfertMontant').value);
+  if (!numero_mtn_agent || !numero_mtn_client || !montant) return showMsg('Remplis tous les champs', 'error');
+  try {
+    const res = await apiCall('/api/transferts', 'POST', { numero_mtn_agent, numero_mtn_client, montant }, true);
+    showMsg(`Transfert réussi ! Frais: ${res.details.frais} XAF`, 'success');
+    chargerCompte();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function effectuerRetrait() {
+  const numero_mtn_client = document.getElementById('retraitClient').value.trim();
+  const numero_mtn_agent = document.getElementById('retraitAgent').value.trim();
+  const montant = parseFloat(document.getElementById('retraitMontant').value);
+  if (!numero_mtn_client || !numero_mtn_agent || !montant) return showMsg('Remplis tous les champs', 'error');
+  try {
+    const res = await apiCall('/api/retraits', 'POST', { numero_mtn_client, numero_mtn_agent, montant }, true);
+    showMsg(`Retrait réussi ! Frais: ${res.details.frais} XAF`, 'success');
+    chargerCompte();
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+async function chargerHistorique() {
+  const numero = document.getElementById('numeroMtn').value.trim();
+  const list = document.getElementById('historiqueList');
+  if (!numero) { list.innerHTML = 'Charge un compte d\'abord.'; return; }
+  try {
+    const res = await apiCall(`/api/historique/${numero}`);
+    if (res.historique.length === 0) {
+      list.innerHTML = 'Aucune transaction.';
+      return;
+    }
+    list.innerHTML = res.historique.map(t => `
+      <div class="txn">
+        <div>
+          <div>${t.type_operation}</div>
+          <div style="color:#94a3b8;font-size:0.75rem;">${new Date(t.date_creation).toLocaleString('fr-FR')}</div>
+        </div>
+        <div style="color:${t.status === 'COMPLETED' ? '#4ade80' : '#facc15'};">
+          ${new Intl.NumberFormat('fr-FR').format(t.montant)} XAF
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = 'Erreur de chargement.';
+  }
+}
+</script>
+</body>
+</html>
