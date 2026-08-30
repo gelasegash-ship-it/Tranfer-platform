@@ -15,7 +15,17 @@
   }
   .container { max-width: 480px; margin: 0 auto; }
   h1 { text-align: center; font-size: 2rem; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #93c5fd; font-size: 0.85rem; margin-bottom: 24px; }
+  .subtitle { text-align: center; color: #93c5fd; font-size: 0.85rem; margin-bottom: 16px; }
+  .lang-selector { margin-bottom: 16px; }
+  .lang-selector select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(59,130,246,0.4);
+    background: rgba(0,0,0,0.4);
+    color: white;
+    font-size: 0.95rem;
+  }
   .card {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(59,130,246,0.3);
@@ -24,7 +34,7 @@
     margin-bottom: 16px;
   }
   .balance { font-size: 2rem; font-weight: bold; margin: 8px 0; }
-  input, select {
+  input, select.field {
     width: 100%;
     padding: 12px;
     margin-bottom: 12px;
@@ -46,17 +56,16 @@
     cursor: pointer;
     margin-bottom: 8px;
   }
-  button:disabled { opacity: 0.5; }
-  button.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
   .tab {
     flex: 1;
-    padding: 10px;
+    padding: 10px 6px;
     text-align: center;
     border-radius: 8px;
     background: rgba(255,255,255,0.05);
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
   }
   .tab.active { background: #3b82f6; }
   .hidden { display: none; }
@@ -65,76 +74,377 @@
   .msg.error { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); }
   .txn { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; font-size: 0.85rem; }
   .settings-toggle { text-align: center; font-size: 0.75rem; color: #93c5fd; margin-top: 20px; cursor: pointer; }
+  label.field-label { font-size: 0.8rem; color: #93c5fd; display: block; margin-bottom: 6px; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>💸 TRANSFER</h1>
-  <p class="subtitle">Money moves fast • We move faster</p>
+  <p class="subtitle" data-i18n="slogan">Money moves fast • We move faster</p>
+
+  <div class="lang-selector">
+    <select id="langSelect" onchange="setLang(this.value)"></select>
+  </div>
 
   <div class="card">
-    <div style="font-size:0.85rem;color:#93c5fd;">Numéro MTN de test</div>
-    <input id="numeroMtn" placeholder="Ex: 243777000000" value="243777000000">
-    <button onclick="chargerCompte()">🔍 Charger le compte</button>
+    <label class="field-label" data-i18n="lbl_numero">Numéro MTN de test</label>
+    <input id="numeroMtn" value="243777000000">
+    <button onclick="chargerCompte()" data-i18n="btn_charger">🔍 Charger le compte</button>
   </div>
 
   <div id="msgBox"></div>
 
   <div id="compteInfo" class="card hidden">
-    <div style="font-size:0.85rem;color:#93c5fd;">Solde disponible</div>
+    <div class="field-label" data-i18n="lbl_solde">Solde disponible</div>
     <div class="balance" id="soldeAffiche">-- XAF</div>
     <div style="font-size:0.8rem;color:#94a3b8;" id="nomAffiche"></div>
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('creer')" id="tab-creer">Créer compte</div>
-    <div class="tab" onclick="switchTab('transfert')" id="tab-transfert">Transfert</div>
-    <div class="tab" onclick="switchTab('retrait')" id="tab-retrait">Retrait</div>
-    <div class="tab" onclick="switchTab('historique')" id="tab-historique">Historique</div>
+    <div class="tab active" onclick="switchTab('creer')" id="tab-creer" data-i18n="tab_creer">Créer</div>
+    <div class="tab" onclick="switchTab('transfert')" id="tab-transfert" data-i18n="tab_transfert">Transfert</div>
+    <div class="tab" onclick="switchTab('retrait')" id="tab-retrait" data-i18n="tab_retrait">Retrait</div>
+    <div class="tab" onclick="switchTab('historique')" id="tab-historique" data-i18n="tab_historique">Historique</div>
   </div>
 
   <div id="panel-creer" class="card">
-    <input id="creerNom" placeholder="Nom complet">
-    <input id="creerNumero" placeholder="Numéro MTN">
-    <select id="creerType">
-      <option value="CLIENT">Client</option>
-      <option value="AGENT">Agent</option>
+    <label class="field-label" data-i18n="lbl_nom">Nom complet</label>
+    <input id="creerNom">
+    <label class="field-label" data-i18n="lbl_numero_mtn">Numéro MTN</label>
+    <input id="creerNumero">
+    <label class="field-label" data-i18n="lbl_type_compte">Type de compte</label>
+    <select id="creerType" class="field">
+      <option value="CLIENT" data-i18n="opt_client">Client</option>
+      <option value="AGENT" data-i18n="opt_agent">Agent</option>
     </select>
-    <input id="creerSolde" placeholder="Solde initial (optionnel)" type="number">
-    <button onclick="creerCompte()">➕ Créer le compte</button>
+    <label class="field-label" data-i18n="lbl_solde_initial">Solde initial (optionnel)</label>
+    <input id="creerSolde" type="number">
+    <button onclick="creerCompte()" data-i18n="btn_creer">➕ Créer le compte</button>
   </div>
 
   <div id="panel-transfert" class="card hidden">
-    <input id="transfertAgent" placeholder="Numéro MTN Agent (expéditeur)">
-    <input id="transfertClient" placeholder="Numéro MTN Client (destinataire)">
-    <input id="transfertMontant" placeholder="Montant" type="number">
-    <button onclick="effectuerTransfert()">📤 Envoyer</button>
+    <label class="field-label" data-i18n="lbl_agent_exp">Numéro MTN Agent (expéditeur)</label>
+    <input id="transfertAgent">
+    <label class="field-label" data-i18n="lbl_client_dest">Numéro MTN Client (destinataire)</label>
+    <input id="transfertClient">
+    <label class="field-label" data-i18n="lbl_montant">Montant</label>
+    <input id="transfertMontant" type="number">
+    <button onclick="effectuerTransfert()" data-i18n="btn_envoyer">📤 Envoyer</button>
   </div>
 
   <div id="panel-retrait" class="card hidden">
-    <input id="retraitClient" placeholder="Numéro MTN Client (expéditeur)">
-    <input id="retraitAgent" placeholder="Numéro MTN Agent (destinataire)">
-    <input id="retraitMontant" placeholder="Montant" type="number">
-    <button onclick="effectuerRetrait()">💳 Retirer</button>
+    <label class="field-label" data-i18n="lbl_client_exp">Numéro MTN Client (expéditeur)</label>
+    <input id="retraitClient">
+    <label class="field-label" data-i18n="lbl_agent_dest">Numéro MTN Agent (destinataire)</label>
+    <input id="retraitAgent">
+    <label class="field-label" data-i18n="lbl_montant">Montant</label>
+    <input id="retraitMontant" type="number">
+    <button onclick="effectuerRetrait()" data-i18n="btn_retirer">💳 Retirer</button>
   </div>
 
   <div id="panel-historique" class="card hidden">
-    <div id="historiqueList">Charge un compte d'abord.</div>
+    <div id="historiqueList" data-i18n="msg_charge_dabord">Charge un compte d'abord.</div>
   </div>
 
-  <div class="settings-toggle" onclick="toggleSettings()">⚙️ Configurer l'URL de l'API / clé</div>
+  <div class="settings-toggle" onclick="toggleSettings()" data-i18n="lbl_settings">⚙️ Configurer l'URL de l'API / clé</div>
   <div id="settingsPanel" class="card hidden">
-    <div style="font-size:0.8rem;color:#93c5fd;margin-bottom:8px;">URL de l'API</div>
+    <label class="field-label">URL de l'API</label>
     <input id="apiUrl" value="https://tranfer-platform-api.onrender.com">
-    <div style="font-size:0.8rem;color:#93c5fd;margin-bottom:8px;">Clé API (X-API-Key)</div>
-    <input id="apiKey" value="transfer-secret-key-a-changer">
-    <button onclick="sauverConfig()">💾 Sauvegarder</button>
+    <label class="field-label">Clé API (X-API-Key)</label>
+    <input id="apiKey" value="">
+    <button onclick="sauverConfig()" data-i18n="btn_sauver">💾 Sauvegarder</button>
   </div>
 </div>
 
 <script>
+// ============================================================================
+// TRADUCTIONS — 19 langues africaines + français + anglais
+// ============================================================================
+const LANGS = {
+  fr: { name: "🇫🇷 Français", t: {
+    slogan: "Money moves fast • We move faster", lbl_numero: "Numéro MTN de test",
+    btn_charger: "🔍 Charger le compte", lbl_solde: "Solde disponible",
+    tab_creer: "Créer", tab_transfert: "Transfert", tab_retrait: "Retrait", tab_historique: "Historique",
+    lbl_nom: "Nom complet", lbl_numero_mtn: "Numéro MTN", lbl_type_compte: "Type de compte",
+    opt_client: "Client", opt_agent: "Agent", lbl_solde_initial: "Solde initial (optionnel)",
+    btn_creer: "➕ Créer le compte", lbl_agent_exp: "Numéro MTN Agent (expéditeur)",
+    lbl_client_dest: "Numéro MTN Client (destinataire)", lbl_montant: "Montant",
+    btn_envoyer: "📤 Envoyer", lbl_client_exp: "Numéro MTN Client (expéditeur)",
+    lbl_agent_dest: "Numéro MTN Agent (destinataire)", btn_retirer: "💳 Retirer",
+    msg_charge_dabord: "Charge un compte d'abord.", lbl_settings: "⚙️ Configurer l'URL de l'API / clé",
+    btn_sauver: "💾 Sauvegarder"
+  }},
+  en: { name: "🇬🇧 English", t: {
+    slogan: "Money moves fast • We move faster", lbl_numero: "Test MTN number",
+    btn_charger: "🔍 Load account", lbl_solde: "Available balance",
+    tab_creer: "Create", tab_transfert: "Transfer", tab_retrait: "Withdraw", tab_historique: "History",
+    lbl_nom: "Full name", lbl_numero_mtn: "MTN number", lbl_type_compte: "Account type",
+    opt_client: "Client", opt_agent: "Agent", lbl_solde_initial: "Initial balance (optional)",
+    btn_creer: "➕ Create account", lbl_agent_exp: "Agent MTN number (sender)",
+    lbl_client_dest: "Client MTN number (recipient)", lbl_montant: "Amount",
+    btn_envoyer: "📤 Send", lbl_client_exp: "Client MTN number (sender)",
+    lbl_agent_dest: "Agent MTN number (recipient)", btn_retirer: "💳 Withdraw",
+    msg_charge_dabord: "Load an account first.", lbl_settings: "⚙️ Configure API URL / key",
+    btn_sauver: "💾 Save"
+  }},
+  ln: { name: "🇨🇩 Lingála", t: {
+    slogan: "Mbongo ekei mbangu • Biso tokei mbangu koleka", lbl_numero: "Motango ya MTN (test)",
+    btn_charger: "🔍 Fungola compte", lbl_solde: "Mbongo oyo ezali",
+    tab_creer: "Kosala", tab_transfert: "Kotinda", tab_retrait: "Kobimisa", tab_historique: "Istware",
+    lbl_nom: "Kombo mobimba", lbl_numero_mtn: "Motango ya MTN", lbl_type_compte: "Lolenge ya compte",
+    opt_client: "Client", opt_agent: "Agent", lbl_solde_initial: "Mbongo ya ebandeli (esengeli te)",
+    btn_creer: "➕ Kosala compte", lbl_agent_exp: "Motango ya Agent (motindi)",
+    lbl_client_dest: "Motango ya Client (mozwi)", lbl_montant: "Mbongo",
+    btn_envoyer: "📤 Kotinda", lbl_client_exp: "Motango ya Client (motindi)",
+    lbl_agent_dest: "Motango ya Agent (mozwi)", btn_retirer: "💳 Kobimisa",
+    msg_charge_dabord: "Fungola compte liboso.", lbl_settings: "⚙️ Configurer API",
+    btn_sauver: "💾 Bomba"
+  }},
+  sw: { name: "🇰🇪 Kiswahili", t: {
+    slogan: "Pesa inaenda haraka • Sisi tunaenda haraka zaidi", lbl_numero: "Nambari ya MTN (jaribio)",
+    btn_charger: "🔍 Pakia akaunti", lbl_solde: "Salio linalopatikana",
+    tab_creer: "Unda", tab_transfert: "Tuma", tab_retrait: "Toa", tab_historique: "Historia",
+    lbl_nom: "Jina kamili", lbl_numero_mtn: "Nambari ya MTN", lbl_type_compte: "Aina ya akaunti",
+    opt_client: "Mteja", opt_agent: "Wakala", lbl_solde_initial: "Salio la awali (hiari)",
+    btn_creer: "➕ Unda akaunti", lbl_agent_exp: "Nambari ya Wakala (mtumaji)",
+    lbl_client_dest: "Nambari ya Mteja (mpokeaji)", lbl_montant: "Kiasi",
+    btn_envoyer: "📤 Tuma", lbl_client_exp: "Nambari ya Mteja (mtumaji)",
+    lbl_agent_dest: "Nambari ya Wakala (mpokeaji)", btn_retirer: "💳 Toa",
+    msg_charge_dabord: "Pakia akaunti kwanza.", lbl_settings: "⚙️ Sanidi API",
+    btn_sauver: "💾 Hifadhi"
+  }},
+  yo: { name: "🇳🇬 Yorùbá", t: {
+    slogan: "Owó ń rìn kíákíá • A ń yára ju bẹ́ẹ̀ lọ", lbl_numero: "Nọ́mbà MTN (àdánwò)",
+    btn_charger: "🔍 Ṣí àkọọ́lẹ̀", lbl_solde: "Owó tí ó wà",
+    tab_creer: "Dá", tab_transfert: "Fi ránṣẹ́", tab_retrait: "Yọ jáde", tab_historique: "Ìtàn",
+    lbl_nom: "Orúkọ kíkún", lbl_numero_mtn: "Nọ́mbà MTN", lbl_type_compte: "Irú àkọọ́lẹ̀",
+    opt_client: "Oníbàárà", opt_agent: "Aṣojú", lbl_solde_initial: "Owó ìbẹ̀rẹ̀ (kì í ṣe dandan)",
+    btn_creer: "➕ Dá àkọọ́lẹ̀", lbl_agent_exp: "Nọ́mbà Aṣojú (olùránṣẹ́)",
+    lbl_client_dest: "Nọ́mbà Oníbàárà (olùgbà)", lbl_montant: "Iye owó",
+    btn_envoyer: "📤 Fi ránṣẹ́", lbl_client_exp: "Nọ́mbà Oníbàárà (olùránṣẹ́)",
+    lbl_agent_dest: "Nọ́mbà Aṣojú (olùgbà)", btn_retirer: "💳 Yọ jáde",
+    msg_charge_dabord: "Ṣí àkọọ́lẹ̀ kan ná.", lbl_settings: "⚙️ Ètò API",
+    btn_sauver: "💾 Fi pamọ́"
+  }},
+  ha: { name: "🇳🇬 Hausa", t: {
+    slogan: "Kuɗi na tafiya da sauri • Mu muna tafiya da sauri fiye", lbl_numero: "Lambar MTN (gwaji)",
+    btn_charger: "🔍 Loda asusun", lbl_solde: "Ma'aunin da ake da shi",
+    tab_creer: "Ƙirƙira", tab_transfert: "Tura", tab_retrait: "Cire", tab_historique: "Tarihi",
+    lbl_nom: "Cikakken suna", lbl_numero_mtn: "Lambar MTN", lbl_type_compte: "Nau'in asusu",
+    opt_client: "Abokin ciniki", opt_agent: "Wakili", lbl_solde_initial: "Ma'aunin farko (na zaɓi)",
+    btn_creer: "➕ Ƙirƙiri asusu", lbl_agent_exp: "Lambar Wakili (mai turawa)",
+    lbl_client_dest: "Lambar Abokin ciniki (mai karɓa)", lbl_montant: "Adadi",
+    btn_envoyer: "📤 Tura", lbl_client_exp: "Lambar Abokin ciniki (mai turawa)",
+    lbl_agent_dest: "Lambar Wakili (mai karɓa)", btn_retirer: "💳 Cire",
+    msg_charge_dabord: "Loda asusu tukuna.", lbl_settings: "⚙️ Saita API",
+    btn_sauver: "💾 Ajiye"
+  }},
+  ig: { name: "🇳🇬 Igbo", t: {
+    slogan: "Ego na-aga ọsọ ọsọ • Anyị na-aga ọsọ karịa", lbl_numero: "Nọmba MTN (nnwale)",
+    btn_charger: "🔍 Bulite akaụntụ", lbl_solde: "Ego dị",
+    tab_creer: "Mepụta", tab_transfert: "Zipu", tab_retrait: "Wepụta", tab_historique: "Akụkọ ihe mere eme",
+    lbl_nom: "Aha zuru ezu", lbl_numero_mtn: "Nọmba MTN", lbl_type_compte: "Ụdị akaụntụ",
+    opt_client: "Onye ahịa", opt_agent: "Onye nnọchite", lbl_solde_initial: "Ego mbụ (nhọrọ)",
+    btn_creer: "➕ Mepụta akaụntụ", lbl_agent_exp: "Nọmba Onye nnọchite (onye na-eziga)",
+    lbl_client_dest: "Nọmba Onye ahịa (onye na-anata)", lbl_montant: "Ego ole",
+    btn_envoyer: "📤 Zipu", lbl_client_exp: "Nọmba Onye ahịa (onye na-eziga)",
+    lbl_agent_dest: "Nọmba Onye nnọchite (onye na-anata)", btn_retirer: "💳 Wepụta",
+    msg_charge_dabord: "Bulite akaụntụ mbụ.", lbl_settings: "⚙️ Haziri API",
+    btn_sauver: "💾 Chekwaa"
+  }},
+  am: { name: "🇪🇹 አማርኛ", t: {
+    slogan: "ገንዘብ በፍጥነት ይንቀሳቀሳል • እኛ ይበልጥ በፍጥነት እንንቀሳቀሳለን", lbl_numero: "የMTN ቁጥር (ሙከራ)",
+    btn_charger: "🔍 መለያ ጫን", lbl_solde: "ያለው ሒሳብ",
+    tab_creer: "ፍጠር", tab_transfert: "ላክ", tab_retrait: "አውጣ", tab_historique: "ታሪክ",
+    lbl_nom: "ሙሉ ስም", lbl_numero_mtn: "የMTN ቁጥር", lbl_type_compte: "የመለያ አይነት",
+    opt_client: "ደንበኛ", opt_agent: "ወኪል", lbl_solde_initial: "የመጀመሪያ ሒሳብ (አማራጭ)",
+    btn_creer: "➕ መለያ ፍጠር", lbl_agent_exp: "የወኪል ቁጥር (ላኪ)",
+    lbl_client_dest: "የደንበኛ ቁጥር (ተቀባይ)", lbl_montant: "መጠን",
+    btn_envoyer: "📤 ላክ", lbl_client_exp: "የደንበኛ ቁጥር (ላኪ)",
+    lbl_agent_dest: "የወኪል ቁጥር (ተቀባይ)", btn_retirer: "💳 አውጣ",
+    msg_charge_dabord: "መጀመሪያ መለያ ጫን።", lbl_settings: "⚙️ API አዋቅር",
+    btn_sauver: "💾 አስቀምጥ"
+  }},
+  zu: { name: "🇿🇦 isiZulu", t: {
+    slogan: "Imali ihamba ngokushesha • Thina sihamba ngokushesha nakakhulu", lbl_numero: "Inombolo ye-MTN (ukuhlola)",
+    btn_charger: "🔍 Layisha i-akhawunti", lbl_solde: "Ibhalansi etholakalayo",
+    tab_creer: "Dala", tab_transfert: "Thumela", tab_retrait: "Khipha", tab_historique: "Umlando",
+    lbl_nom: "Igama eliphelele", lbl_numero_mtn: "Inombolo ye-MTN", lbl_type_compte: "Uhlobo lwe-akhawunti",
+    opt_client: "Iklayenti", opt_agent: "Umenzeli", lbl_solde_initial: "Ibhalansi yokuqala (akudingekile)",
+    btn_creer: "➕ Dala i-akhawunti", lbl_agent_exp: "Inombolo yoMenzeli (othumelayo)",
+    lbl_client_dest: "Inombolo yeKlayenti (owamukelayo)", lbl_montant: "Inani",
+    btn_envoyer: "📤 Thumela", lbl_client_exp: "Inombolo yeKlayenti (othumelayo)",
+    lbl_agent_dest: "Inombolo yoMenzeli (owamukelayo)", btn_retirer: "💳 Khipha",
+    msg_charge_dabord: "Layisha i-akhawunti kuqala.", lbl_settings: "⚙️ Setha i-API",
+    btn_sauver: "💾 Londoloza"
+  }},
+  xh: { name: "🇿🇦 isiXhosa", t: {
+    slogan: "Imali ihamba ngokukhawuleza • Thina sihamba ngokukhawuleza nangakumbi", lbl_numero: "Inombolo ye-MTN (uvavanyo)",
+    btn_charger: "🔍 Layisha iakhawunti", lbl_solde: "Ibhalansi ekhoyo",
+    tab_creer: "Yenza", tab_transfert: "Thumela", tab_retrait: "Khupha", tab_historique: "Imbali",
+    lbl_nom: "Igama elipheleleyo", lbl_numero_mtn: "Inombolo ye-MTN", lbl_type_compte: "Uhlobo lwe-akhawunti",
+    opt_client: "Umxhasi", opt_agent: "Ummeli", lbl_solde_initial: "Ibhalansi yokuqala (akunyanzelekanga)",
+    btn_creer: "➕ Yenza iakhawunti", lbl_agent_exp: "Inombolo yoMmeli (othumelayo)",
+    lbl_client_dest: "Inombolo yoMxhasi (ofumanayo)", lbl_montant: "Isixa",
+    btn_envoyer: "📤 Thumela", lbl_client_exp: "Inombolo yoMxhasi (othumelayo)",
+    lbl_agent_dest: "Inombolo yoMmeli (ofumanayo)", btn_retirer: "💳 Khupha",
+    msg_charge_dabord: "Layisha iakhawunti kuqala.", lbl_settings: "⚙️ Misela i-API",
+    btn_sauver: "💾 Gcina"
+  }},
+  st: { name: "🇱🇸 Sesotho", t: {
+    slogan: "Chelete e tsamaea ka potlako • Rona re tsamaea ka potlako ho feta", lbl_numero: "Nomoro ea MTN (teko)",
+    btn_charger: "🔍 Kenya akhaonto", lbl_solde: "Chelete e leng teng",
+    tab_creer: "Theha", tab_transfert: "Romela", tab_retrait: "Ntša", tab_historique: "Nalane",
+    lbl_nom: "Lebitso le felletseng", lbl_numero_mtn: "Nomoro ea MTN", lbl_type_compte: "Mofuta oa akhaonto",
+    opt_client: "Moreki", opt_agent: "Moemeli", lbl_solde_initial: "Chelete ea qalo (ha e hlokahale)",
+    btn_creer: "➕ Theha akhaonto", lbl_agent_exp: "Nomoro ea Moemeli (moromelli)",
+    lbl_client_dest: "Nomoro ea Moreki (moamoheli)", lbl_montant: "Chelete",
+    btn_envoyer: "📤 Romela", lbl_client_exp: "Nomoro ea Moreki (moromelli)",
+    lbl_agent_dest: "Nomoro ea Moemeli (moamoheli)", btn_retirer: "💳 Ntša",
+    msg_charge_dabord: "Kenya akhaonto pele.", lbl_settings: "⚙️ Lokisa API",
+    btn_sauver: "💾 Boloka"
+  }},
+  bm: { name: "🇲🇱 Bamanankan", t: {
+    slogan: "Wari bɛ taa teliya la • An bɛ taa teliya kosɛbɛ", lbl_numero: "MTN nimɔrɔ (kɔrɔbɔli)",
+    btn_charger: "🔍 Kunbɛn dɔ lakisɛ", lbl_solde: "Wari min bɛ yen",
+    tab_creer: "Dilan", tab_transfert: "Ci", tab_retrait: "Bɔ", tab_historique: "Tariku",
+    lbl_nom: "Tɔgɔ dafalen", lbl_numero_mtn: "MTN nimɔrɔ", lbl_type_compte: "Kunbɛn suguya",
+    opt_client: "Kiliyan", opt_agent: "Jɔyɔrɔ ta", lbl_solde_initial: "Wari daminɛ (wajibi tɛ)",
+    btn_creer: "➕ Kunbɛn dilan", lbl_agent_exp: "Jɔyɔrɔta nimɔrɔ (cibaga)",
+    lbl_client_dest: "Kiliyan nimɔrɔ (sɔrɔbaga)", lbl_montant: "Wari hakɛ",
+    btn_envoyer: "📤 Ci", lbl_client_exp: "Kiliyan nimɔrɔ (cibaga)",
+    lbl_agent_dest: "Jɔyɔrɔta nimɔrɔ (sɔrɔbaga)", btn_retirer: "💳 Bɔ",
+    msg_charge_dabord: "Kunbɛn dɔ lakisɛ fɔlɔ.", lbl_settings: "⚙️ API labɛn",
+    btn_sauver: "💾 Mara"
+  }},
+  wo: { name: "🇸🇳 Wolof", t: {
+    slogan: "Xaalis dafa gaaw • Ñun dañu gën a gaaw", lbl_numero: "Limu MTN (essai)",
+    btn_charger: "🔍 Ubbi kont", lbl_solde: "Xaalis am na",
+    tab_creer: "Sos", tab_transfert: "Yónnee", tab_retrait: "Génne", tab_historique: "Jaar-jaar",
+    lbl_nom: "Tur wu mat", lbl_numero_mtn: "Limu MTN", lbl_type_compte: "Xeetu kont",
+    opt_client: "Kiliyaŋ", opt_agent: "Ndaw", lbl_solde_initial: "Xaalis dëkkuwaay (soo bëggée)",
+    btn_creer: "➕ Sos kont", lbl_agent_exp: "Limu Ndaw (yónneekat)",
+    lbl_client_dest: "Limu Kiliyaŋ (nangukat)", lbl_montant: "Xaalis bi",
+    btn_envoyer: "📤 Yónnee", lbl_client_exp: "Limu Kiliyaŋ (yónneekat)",
+    lbl_agent_dest: "Limu Ndaw (nangukat)", btn_retirer: "💳 Génne",
+    msg_charge_dabord: "Ubbi kont bu jëkk.", lbl_settings: "⚙️ Wàll API",
+    btn_sauver: "💾 Denc"
+  }},
+  tw: { name: "🇬🇭 Twi", t: {
+    slogan: "Sika kɔ ntɛmntɛm • Yɛn na yɛkɔ ntɛm sen saa", lbl_numero: "MTN nɔma (sɔhwɛ)",
+    btn_charger: "🔍 Bue akonta", lbl_solde: "Sika a ɛwɔ hɔ",
+    tab_creer: "Yɛ foforo", tab_transfert: "Soma", tab_retrait: "Yi", tab_historique: "Abakɔsɛm",
+    lbl_nom: "Din a edi mu", lbl_numero_mtn: "MTN nɔma", lbl_type_compte: "Akonta su",
+    opt_client: "Adetɔfo", opt_agent: "Ɔhyɛfo", lbl_solde_initial: "Mfitiase sika (ɛho nhia)",
+    btn_creer: "➕ Yɛ akonta foforo", lbl_agent_exp: "Ɔhyɛfo nɔma (Ɔsomafo)",
+    lbl_client_dest: "Adetɔfo nɔma (Ogyefo)", lbl_montant: "Dodow",
+    btn_envoyer: "📤 Soma", lbl_client_exp: "Adetɔfo nɔma (Ɔsomafo)",
+    lbl_agent_dest: "Ɔhyɛfo nɔma (Ogyefo)", btn_retirer: "💳 Yi",
+    msg_charge_dabord: "Bue akonta kan.", lbl_settings: "⚙️ Hyehyɛ API",
+    btn_sauver: "💾 Sie"
+  }},
+  so: { name: "🇸🇴 Soomaali", t: {
+    slogan: "Lacagtu si degdeg ah bay u socotaa • Annagu si ka sii degdeg ah ayaan u soconaa", lbl_numero: "Lambarka MTN (tijaabo)",
+    btn_charger: "🔍 Soo rar akoonka", lbl_solde: "Hadhaaga la heli karo",
+    tab_creer: "Samee", tab_transfert: "Dir", tab_retrait: "Ka bixi", tab_historique: "Taariikh",
+    lbl_nom: "Magaca oo dhan", lbl_numero_mtn: "Lambarka MTN", lbl_type_compte: "Nooca akoonka",
+    opt_client: "Macmiil", opt_agent: "Wakiil", lbl_solde_initial: "Hadhaaga bilowga (ikhtiyaari)",
+    btn_creer: "➕ Samee akoon", lbl_agent_exp: "Lambarka Wakiilka (diraha)",
+    lbl_client_dest: "Lambarka Macmiilka (helaha)", lbl_montant: "Qadarka",
+    btn_envoyer: "📤 Dir", lbl_client_exp: "Lambarka Macmiilka (diraha)",
+    lbl_agent_dest: "Lambarka Wakiilka (helaha)", btn_retirer: "💳 Ka bixi",
+    msg_charge_dabord: "Marka hore soo rar akoon.", lbl_settings: "⚙️ Habee API",
+    btn_sauver: "💾 Kaydi"
+  }},
+  ti: { name: "🇪🇷 ትግርኛ", t: {
+    slogan: "ገንዘብ ብቕልጡፍ ይንቀሳቐስ • ንሕና ግና ንላዕሊ ብቕልጡፍ ንንቀሳቐስ", lbl_numero: "ቁጽሪ MTN (փորձ)",
+    btn_charger: "🔍 ሕሳብ ጽዓን", lbl_solde: "ዘሎ ቀሪ ገንዘብ",
+    tab_creer: "ፍጠር", tab_transfert: "ስደድ", tab_retrait: "ኣውጽእ", tab_historique: "ታሪኽ",
+    lbl_nom: "ምሉእ ስም", lbl_numero_mtn: "ቁጽሪ MTN", lbl_type_compte: "ዓይነት ሕሳብ",
+    opt_client: "ዓሚል", opt_agent: "ወኪል", lbl_solde_initial: "መጀመርታ ገንዘብ (ኣማራጺ)",
+    btn_creer: "➕ ሕሳብ ፍጠር", lbl_agent_exp: "ቁጽሪ ወኪል (ለኣኺ)",
+    lbl_client_dest: "ቁጽሪ ዓሚል (ተቐባሊ)", lbl_montant: "መጠን",
+    btn_envoyer: "📤 ስደድ", lbl_client_exp: "ቁጽሪ ዓሚል (ለኣኺ)",
+    lbl_agent_dest: "ቁጽሪ ወኪል (ተቐባሊ)", btn_retirer: "💳 ኣውጽእ",
+    msg_charge_dabord: "ቅድም ሕሳብ ጽዓን።", lbl_settings: "⚙️ API ኣተዓራርይ",
+    btn_sauver: "💾 ዕቀብ"
+  }},
+  rn: { name: "🇧🇮 Kirundi", t: {
+    slogan: "Amafaranga aragenda vuba • Twebwe turagenda vuba kuruta", lbl_numero: "Nomero ya MTN (ikizamini)",
+    btn_charger: "🔍 Fungura konte", lbl_solde: "Amafaranga ahari",
+    tab_creer: "Kurema", tab_transfert: "Kohereza", tab_retrait: "Gukura", tab_historique: "Amateka",
+    lbl_nom: "Amazina yose", lbl_numero_mtn: "Nomero ya MTN", lbl_type_compte: "Ubwoko bwa konte",
+    opt_client: "Umukiriya", opt_agent: "Intumwa", lbl_solde_initial: "Amafaranga y'itangiriro (ntibisabwa)",
+    btn_creer: "➕ Kurema konte", lbl_agent_exp: "Nomero y'Intumwa (uwohereza)",
+    lbl_client_dest: "Nomero y'Umukiriya (uwakira)", lbl_montant: "Umubare",
+    btn_envoyer: "📤 Kohereza", lbl_client_exp: "Nomero y'Umukiriya (uwohereza)",
+    lbl_agent_dest: "Nomero y'Intumwa (uwakira)", btn_retirer: "💳 Gukura",
+    msg_charge_dabord: "Fungura konte mbere.", lbl_settings: "⚙️ Tunganya API",
+    btn_sauver: "💾 Bika"
+  }},
+  rw: { name: "🇷🇼 Kinyarwanda", t: {
+    slogan: "Amafaranga agenda vuba • Twebwe dukora vuba kurushaho", lbl_numero: "Nimero ya MTN (ikizamini)",
+    btn_charger: "🔍 Fungura konti", lbl_solde: "Amafaranga ahari",
+    tab_creer: "Kurema", tab_transfert: "Kohereza", tab_retrait: "Kubikuramo", tab_historique: "Amateka",
+    lbl_nom: "Amazina yombi", lbl_numero_mtn: "Nimero ya MTN", lbl_type_compte: "Ubwoko bwa konti",
+    opt_client: "Umukiriya", opt_agent: "Intumwa", lbl_solde_initial: "Amafaranga y'itangira (ntibisabwa)",
+    btn_creer: "➕ Kurema konti", lbl_agent_exp: "Nimero y'Intumwa (uwohereza)",
+    lbl_client_dest: "Nimero y'Umukiriya (uwakira)", lbl_montant: "Umubare",
+    btn_envoyer: "📤 Kohereza", lbl_client_exp: "Nimero y'Umukiriya (uwohereza)",
+    lbl_agent_dest: "Nimero y'Intumwa (uwakira)", btn_retirer: "💳 Kubikuramo",
+    msg_charge_dabord: "Fungura konti mbere.", lbl_settings: "⚙️ Tunganya API",
+    btn_sauver: "💾 Bika"
+  }},
+  tn: { name: "🇧🇼 Setswana", t: {
+    slogan: "Madi a tsamaya ka bonako • Rona re tsamaya ka bonako go feta", lbl_numero: "Nomoro ya MTN (teko)",
+    btn_charger: "🔍 Laisa akhaonto", lbl_solde: "Madi a a leng teng",
+    tab_creer: "Tlhama", tab_transfert: "Romela", tab_retrait: "Ntsha", tab_historique: "Hisitori",
+    lbl_nom: "Leina le le feletseng", lbl_numero_mtn: "Nomoro ya MTN", lbl_type_compte: "Mofuta wa akhaonto",
+    opt_client: "Moreki", opt_agent: "Moemedi", lbl_solde_initial: "Madi a tshimologo (ga a patelesege)",
+    btn_creer: "➕ Tlhama akhaonto", lbl_agent_exp: "Nomoro ya Moemedi (moromedi)",
+    lbl_client_dest: "Nomoro ya Moreki (moamogedi)", lbl_montant: "Madi",
+    btn_envoyer: "📤 Romela", lbl_client_exp: "Nomoro ya Moreki (moromedi)",
+    lbl_agent_dest: "Nomoro ya Moemedi (moamogedi)", btn_retirer: "💳 Ntsha",
+    msg_charge_dabord: "Laisa akhaonto pele.", lbl_settings: "⚙️ Baakanya API",
+    btn_sauver: "💾 Boloka"
+  }}
+};
+
+let currentLang = localStorage.getItem('lang') || 'fr';
+
+function buildLangSelector() {
+  const sel = document.getElementById('langSelect');
+  sel.innerHTML = Object.entries(LANGS).map(([code, l]) =>
+    `<option value="${code}">${l.name}</option>`
+  ).join('');
+  sel.value = currentLang;
+}
+
+function setLang(code) {
+  currentLang = code;
+  localStorage.setItem('lang', code);
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const dict = LANGS[currentLang].t;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) {
+      if (el.tagName === 'INPUT') el.placeholder = dict[key];
+      else el.textContent = dict[key];
+    }
+  });
+}
+
+buildLangSelector();
+applyTranslations();
+
+// ============================================================================
+// LOGIQUE API (identique à avant)
+// ============================================================================
 let API_URL = localStorage.getItem('apiUrl') || 'https://tranfer-platform-api.onrender.com';
-let API_KEY = localStorage.getItem('apiKey') || 'transfer-secret-key-a-changer';
+let API_KEY = localStorage.getItem('apiKey') || '';
 document.getElementById('apiUrl').value = API_URL;
 document.getElementById('apiKey').value = API_KEY;
 
@@ -147,7 +457,7 @@ function sauverConfig() {
   API_KEY = document.getElementById('apiKey').value.trim();
   localStorage.setItem('apiUrl', API_URL);
   localStorage.setItem('apiKey', API_KEY);
-  showMsg('Configuration sauvegardée', 'success');
+  showMsg('OK', 'success');
 }
 
 function showMsg(text, type) {
@@ -171,13 +481,13 @@ async function apiCall(path, method = 'GET', body = null, needsKey = false) {
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(API_URL + path, options);
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || data.detail || 'Erreur inconnue');
+  if (!res.ok) throw new Error(data.message || data.detail || 'Error');
   return data;
 }
 
 async function chargerCompte() {
   const numero = document.getElementById('numeroMtn').value.trim();
-  if (!numero) return showMsg('Entre un numéro MTN', 'error');
+  if (!numero) return showMsg('Numéro requis', 'error');
   try {
     const compte = await apiCall(`/api/comptes/${numero}`);
     document.getElementById('compteInfo').classList.remove('hidden');
@@ -185,10 +495,10 @@ async function chargerCompte() {
       new Intl.NumberFormat('fr-FR').format(compte.solde) + ' XAF';
     document.getElementById('nomAffiche').textContent =
       `${compte.nom} • ${compte.type_compte}`;
-    showMsg('Compte chargé', 'success');
+    showMsg('OK', 'success');
   } catch (e) {
     document.getElementById('compteInfo').classList.add('hidden');
-    showMsg(e.message.includes('non trouvé') ? 'Ce compte n\'existe pas encore — crée-le dans l\'onglet "Créer compte"' : e.message, 'error');
+    showMsg(e.message, 'error');
   }
 }
 
@@ -200,7 +510,7 @@ async function creerCompte() {
   if (!nom || !numero) return showMsg('Nom et numéro requis', 'error');
   try {
     await apiCall('/api/comptes', 'POST', { numero_mtn: numero, nom, type_compte, solde_initial }, true);
-    showMsg(`Compte créé pour ${nom}`, 'success');
+    showMsg(`✓ ${nom}`, 'success');
     document.getElementById('numeroMtn').value = numero;
     chargerCompte();
   } catch (e) {
@@ -212,10 +522,10 @@ async function effectuerTransfert() {
   const numero_mtn_agent = document.getElementById('transfertAgent').value.trim();
   const numero_mtn_client = document.getElementById('transfertClient').value.trim();
   const montant = parseFloat(document.getElementById('transfertMontant').value);
-  if (!numero_mtn_agent || !numero_mtn_client || !montant) return showMsg('Remplis tous les champs', 'error');
+  if (!numero_mtn_agent || !numero_mtn_client || !montant) return showMsg('Champs requis', 'error');
   try {
     const res = await apiCall('/api/transferts', 'POST', { numero_mtn_agent, numero_mtn_client, montant }, true);
-    showMsg(`Transfert réussi ! Frais: ${res.details.frais} XAF`, 'success');
+    showMsg(`✓ Frais: ${res.details.frais} XAF`, 'success');
     chargerCompte();
   } catch (e) {
     showMsg(e.message, 'error');
@@ -226,10 +536,10 @@ async function effectuerRetrait() {
   const numero_mtn_client = document.getElementById('retraitClient').value.trim();
   const numero_mtn_agent = document.getElementById('retraitAgent').value.trim();
   const montant = parseFloat(document.getElementById('retraitMontant').value);
-  if (!numero_mtn_client || !numero_mtn_agent || !montant) return showMsg('Remplis tous les champs', 'error');
+  if (!numero_mtn_client || !numero_mtn_agent || !montant) return showMsg('Champs requis', 'error');
   try {
     const res = await apiCall('/api/retraits', 'POST', { numero_mtn_client, numero_mtn_agent, montant }, true);
-    showMsg(`Retrait réussi ! Frais: ${res.details.frais} XAF`, 'success');
+    showMsg(`✓ Frais: ${res.details.frais} XAF`, 'success');
     chargerCompte();
   } catch (e) {
     showMsg(e.message, 'error');
@@ -239,18 +549,15 @@ async function effectuerRetrait() {
 async function chargerHistorique() {
   const numero = document.getElementById('numeroMtn').value.trim();
   const list = document.getElementById('historiqueList');
-  if (!numero) { list.innerHTML = 'Charge un compte d\'abord.'; return; }
+  if (!numero) return;
   try {
     const res = await apiCall(`/api/historique/${numero}`);
-    if (res.historique.length === 0) {
-      list.innerHTML = 'Aucune transaction.';
-      return;
-    }
+    if (res.historique.length === 0) { list.innerHTML = '—'; return; }
     list.innerHTML = res.historique.map(t => `
       <div class="txn">
         <div>
           <div>${t.type_operation}</div>
-          <div style="color:#94a3b8;font-size:0.75rem;">${new Date(t.date_creation).toLocaleString('fr-FR')}</div>
+          <div style="color:#94a3b8;font-size:0.75rem;">${new Date(t.date_creation).toLocaleString()}</div>
         </div>
         <div style="color:${t.status === 'COMPLETED' ? '#4ade80' : '#facc15'};">
           ${new Intl.NumberFormat('fr-FR').format(t.montant)} XAF
@@ -258,7 +565,7 @@ async function chargerHistorique() {
       </div>
     `).join('');
   } catch (e) {
-    list.innerHTML = 'Erreur de chargement.';
+    list.innerHTML = 'Erreur';
   }
 }
 </script>
