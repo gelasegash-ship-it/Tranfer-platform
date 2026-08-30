@@ -119,6 +119,8 @@
     </select>
     <label class="field-label" data-i18n="lbl_solde_initial">Solde initial (optionnel)</label>
     <input id="creerSolde" type="number">
+    <label class="field-label" data-i18n="lbl_email">Email (pour recevoir les notifications, optionnel)</label>
+    <input id="creerEmail" type="email">
     <button onclick="creerCompte()" data-i18n="btn_creer">➕ Créer le compte</button>
   </div>
 
@@ -167,7 +169,8 @@ const LANGS = {
     tab_creer: "Créer", tab_transfert: "Transfert", tab_retrait: "Retrait", tab_historique: "Historique",
     lbl_nom: "Nom complet", lbl_numero_mtn: "Numéro MTN", lbl_type_compte: "Type de compte",
     opt_client: "Client", opt_agent: "Agent", lbl_solde_initial: "Solde initial (optionnel)",
-    btn_creer: "➕ Créer le compte", lbl_agent_exp: "Numéro MTN Agent (expéditeur)",
+    btn_creer: "➕ Créer le compte", lbl_email: "Email (pour recevoir les notifications, optionnel)",
+    lbl_agent_exp: "Numéro MTN Agent (expéditeur)",
     lbl_client_dest: "Numéro MTN Client (destinataire)", lbl_montant: "Montant",
     btn_envoyer: "📤 Envoyer", lbl_client_exp: "Numéro MTN Client (expéditeur)",
     lbl_agent_dest: "Numéro MTN Agent (destinataire)", btn_retirer: "💳 Retirer",
@@ -180,7 +183,8 @@ const LANGS = {
     tab_creer: "Create", tab_transfert: "Transfer", tab_retrait: "Withdraw", tab_historique: "History",
     lbl_nom: "Full name", lbl_numero_mtn: "MTN number", lbl_type_compte: "Account type",
     opt_client: "Client", opt_agent: "Agent", lbl_solde_initial: "Initial balance (optional)",
-    btn_creer: "➕ Create account", lbl_agent_exp: "Agent MTN number (sender)",
+    btn_creer: "➕ Create account", lbl_email: "Email (to receive notifications, optional)",
+    lbl_agent_exp: "Agent MTN number (sender)",
     lbl_client_dest: "Client MTN number (recipient)", lbl_montant: "Amount",
     btn_envoyer: "📤 Send", lbl_client_exp: "Client MTN number (sender)",
     lbl_agent_dest: "Agent MTN number (recipient)", btn_retirer: "💳 Withdraw",
@@ -507,9 +511,10 @@ async function creerCompte() {
   const numero = document.getElementById('creerNumero').value.trim();
   const type_compte = document.getElementById('creerType').value;
   const solde_initial = parseFloat(document.getElementById('creerSolde').value) || 0;
+  const email = document.getElementById('creerEmail').value.trim() || null;
   if (!nom || !numero) return showMsg('Nom et numéro requis', 'error');
   try {
-    await apiCall('/api/comptes', 'POST', { numero_mtn: numero, nom, type_compte, solde_initial }, true);
+    await apiCall('/api/comptes', 'POST', { numero_mtn: numero, nom, type_compte, solde_initial, email }, true);
     showMsg(`✓ ${nom}`, 'success');
     document.getElementById('numeroMtn').value = numero;
     chargerCompte();
