@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRANSFER PLATFORM - Backend avec support PostgreSQL persistant
+TRANSFER PLATFORM - Backend avec support PostgreSQL persistant + email
 Utilise DATABASE_URL (PostgreSQL) si disponible, sinon SQLite en local.
 """
 
@@ -20,10 +20,6 @@ if USE_POSTGRES:
 else:
     import sqlite3
 
-# ============================================================================
-# TYPES & ENUMS
-# ============================================================================
-
 class TypeCompte(Enum):
     AGENT = "AGENT"
     CLIENT = "CLIENT"
@@ -42,65 +38,34 @@ class StatusTransfert(Enum):
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
 
-@dataclass
-class Compte:
-    numero_mtn: str
-    nom: str
-    type_compte: str
-    solde: float
-    date_creation: str
-    status: str = "ACTIF"
-    kyc_level: int = 0
-
-# ============================================================================
-# ADAPTATEUR SQL (place-holders différents entre SQLite ? et Postgres %s)
-# ============================================================================
-
 def ph(n: int) -> str:
-    """Retourne les placeholders adaptés au moteur (? pour SQLite, %s pour Postgres)"""
     mark = "%s" if USE_POSTGRES else "?"
     return ", ".join([mark] * n)
 
-def p(single: bool = True) -> str:
+def p() -> str:
     return "%s" if USE_POSTGRES else "?"
 
-# ============================================================================
-# DATABASE MANAGER
-# ============================================================================
-
 class TransfertManager:
-    """Gère tous les transferts et les comptes (PostgreSQL ou SQLite)"""
-
     def __init__(self, db_path: str = 'gestion_transfert.db'):
         self.db_path = db_path
         self.init_database()
 
     def get_connection(self):
         if USE_POSTGRES:
-            conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
-            return conn
+            return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
         else:
             conn = sqlite3.connect(self.db_path)
             conn.row_factory = sqlite3.Row
             return conn
 
     def _dict(self, row):
-        if row is None:
-            return None
-        return dict(row)
-
-    # ========================================================================
-    # INITIALISATION
-    # ========================================================================
+        return dict(row) if row is not None else None
 
     def init_database(self):
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        serial_pk = "SERIAL" if USE_POSTGRES else "INTEGER"
-        text_pk = "TEXT PRIMARY KEY"
-
-        cursor.execute(f"""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS comptes (
                 numero_mtn TEXT PRIMARY KEY,
                 nom TEXT NOT NULL,
@@ -108,9 +73,17 @@ class TransfertManager:
                 solde REAL NOT NULL DEFAULT 0,
                 date_creation TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'ACTIF',
-                kyc_level INTEGER DEFAULT 0
+                kyc_level INTEGER DEFAULT 0,
+                email TEXT
             )
         """)
+
+        # Ajoute la colonne email si elle n'existe pas déjà (mise à jour d'un schéma existant)
+        try:
+            cursor.execute("ALTER TABLE comptes ADD COLUMN email TEXT")
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transferts (
@@ -147,19 +120,15 @@ class TransfertManager:
         conn.close()
         print(f"✅ Base de données initialisée ({'PostgreSQL' if USE_POSTGRES else 'SQLite'})")
 
-    # ========================================================================
-    # COMPTES
-    # ========================================================================
-
     def creer_compte(self, numero_mtn: str, nom: str, type_compte: str,
-                      solde_initial: float = 0) -> bool:
+                      solde_initial: float = 0, email: str = None) -> bool:
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute(
-                f"INSERT INTO comptes (numero_mtn, nom, type_compte, solde, date_creation) "
-                f"VALUES ({ph(5)})",
-                (numero_mtn, nom, type_compte, solde_initial, datetime.now().isoformat())
+                f"INSERT INTO comptes (numero_mtn, nom, type_compte, solde, date_creation, email) "
+                f"VALUES ({ph(6)})",
+                (numero_mtn, nom, type_compte, solde_initial, datetime.now().isoformat(), email)
             )
             conn.commit()
             print(f"✅ Compte créé: {numero_mtn} ({nom})")
@@ -200,10 +169,6 @@ class TransfertManager:
         conn.close()
         return [self._dict(r) for r in rows]
 
-    # ========================================================================
-    # TRANSFERTS / RETRAITS / DEPOTS
-    # ========================================================================
-
     def effectuer_transfert(self, numero_mtn_agent: str, numero_mtn_client: str,
                              montant: float, frais: float = None) -> Tuple[bool, str]:
         return self._executer_operation(
@@ -231,6 +196,7 @@ class TransfertManager:
                 frais = round(montant * 0.005, 2)
             montant_total = montant + frais
 
+            compte_exp = None
             if expediteur != "DEPOT_SYSTEM":
                 cursor.execute(f"SELECT * FROM comptes WHERE numero_mtn = {p()}", (expediteur,))
                 compte_exp = self._dict(cursor.fetchone())
@@ -273,6 +239,24 @@ class TransfertManager:
             )
 
             conn.commit()
+
+            # Notification email (best-effort, ne bloque jamais la transaction si ça échoue)
+            try:
+                from transfer_notifications import notifier_transaction
+                notifier_transaction(
+                    email_expediteur=compte_exp.get('email') if compte_exp else None,
+                    email_destinataire=compte_dest.get('email'),
+                    type_operation=type_operation,
+                    montant=montant,
+                    frais=frais,
+                    expediteur=expediteur,
+                    destinataire=destinataire,
+                    status=StatusTransfert.COMPLETED.value,
+                    transaction_id=transfer_id
+                )
+            except Exception as notif_error:
+                print(f"⚠️ Notification email échouée (transaction OK quand même): {notif_error}")
+
             return True, transfer_id
 
         except Exception as e:
@@ -310,16 +294,12 @@ class TransfertManager:
             return {}
         conn = self.get_connection()
         cursor = conn.cursor()
-
         cursor.execute(f"SELECT COUNT(*) as total FROM transferts WHERE expediteur = {p()}", (numero_mtn,))
         nb_envoyes = self._dict(cursor.fetchone())['total']
-
         cursor.execute(f"SELECT COUNT(*) as total FROM transferts WHERE destinataire = {p()}", (numero_mtn,))
         nb_recus = self._dict(cursor.fetchone())['total']
-
         cursor.close()
         conn.close()
-
         return {
             'solde_actuel': compte['solde'],
             'transferts_envoyes': nb_envoyes,
