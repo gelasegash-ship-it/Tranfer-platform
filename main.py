@@ -53,6 +53,7 @@ class CompteCreate(BaseModel):
     nom: str
     type_compte: str  # AGENT, CLIENT, BENEFICIAIRE
     solde_initial: float = 0
+    email: Optional[str] = None
 
 class Compte(BaseModel):
     numero_mtn: str
@@ -107,7 +108,8 @@ async def creer_compte(compte: CompteCreate, api_key = Depends(verify_api_key)):
             numero_mtn=compte.numero_mtn,
             nom=compte.nom,
             type_compte=compte.type_compte,
-            solde_initial=compte.solde_initial
+            solde_initial=compte.solde_initial,
+            email=compte.email
         )
         
         if success:
