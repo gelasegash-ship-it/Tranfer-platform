@@ -1,32 +1,28 @@
 """
-TRANSFER PLATFORM - Notifications Email
+TRANSFER PLATFORM - Notifications Email via Resend
 Envoie un email de confirmation à chaque transaction (transfert, retrait, dépôt)
-Utilise Gmail SMTP (gratuit, via mot de passe d'application)
+Resend : https://resend.com — plan gratuit 3000 emails/mois, pas de restriction de compte
 """
 
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 from datetime import datetime
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-GMAIL_ADDRESS = os.getenv('GMAIL_ADDRESS', '')
-GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD', '')
-NOTIFICATIONS_ENABLED = bool(GMAIL_ADDRESS and GMAIL_APP_PASSWORD)
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
+NOTIFICATIONS_ENABLED = bool(RESEND_API_KEY)
 
 # ============================================================================
-# TEMPLATES D'EMAIL
+# TEMPLATE D'EMAIL
 # ============================================================================
 
 def template_transaction(type_operation: str, montant: float, frais: float,
                           expediteur: str, destinataire: str, status: str,
                           transaction_id: str) -> str:
-    """Génère le contenu HTML de l'email de notification"""
-
     emoji = {"TRANSFERT": "📤", "RETRAIT": "💳", "DEPOT": "💰"}.get(type_operation, "💸")
     couleur = "#22c55e" if status == "COMPLETED" else "#facc15"
 
@@ -70,30 +66,37 @@ def template_transaction(type_operation: str, montant: float, frais: float,
     """
 
 # ============================================================================
-# ENVOI D'EMAIL
+# ENVOI D'EMAIL VIA RESEND API
 # ============================================================================
 
 def envoyer_email(destinataire_email: str, sujet: str, contenu_html: str) -> bool:
-    """Envoie un email via Gmail SMTP"""
+    """Envoie un email via l'API Resend (simple appel HTTP, pas de SMTP)"""
     if not NOTIFICATIONS_ENABLED:
-        print("⚠️ Notifications email désactivées (GMAIL_ADDRESS / GMAIL_APP_PASSWORD manquants)")
+        print("⚠️ Notifications email désactivées (RESEND_API_KEY manquant)")
         return False
 
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = sujet
-        msg['From'] = f"TRANSFER Platform <{GMAIL_ADDRESS}>"
-        msg['To'] = destinataire_email
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": f"TRANSFER Platform <{RESEND_FROM_EMAIL}>",
+                "to": [destinataire_email],
+                "subject": sujet,
+                "html": contenu_html
+            },
+            timeout=10
+        )
 
-        msg.attach(MIMEText(contenu_html, 'html'))
-
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
-            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            server.send_message(msg)
-
-        print(f"✅ Email envoyé à {destinataire_email}")
-        return True
+        if response.status_code in (200, 201):
+            print(f"✅ Email envoyé à {destinataire_email}")
+            return True
+        else:
+            print(f"❌ Erreur Resend ({response.status_code}): {response.text}")
+            return False
 
     except Exception as e:
         print(f"❌ Erreur envoi email: {e}")
