@@ -89,6 +89,18 @@ class TransfertManager:
         except Exception:
             conn.rollback()
 
+        try:
+            cursor.execute("ALTER TABLE comptes ADD COLUMN pin_hash TEXT")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
+        try:
+            cursor.execute("ALTER TABLE comptes ADD COLUMN is_admin BOOLEAN DEFAULT FALSE")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transferts (
                 id TEXT PRIMARY KEY,
@@ -125,14 +137,15 @@ class TransfertManager:
         print(f"✅ Base de données initialisée ({'PostgreSQL' if USE_POSTGRES else 'SQLite'})")
 
     def creer_compte(self, numero_mtn: str, nom: str, type_compte: str,
-                      solde_initial: float = 0, email: str = None) -> bool:
+                      solde_initial: float = 0, email: str = None,
+                      pin_hash: str = None) -> bool:
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute(
-                f"INSERT INTO comptes (numero_mtn, nom, type_compte, solde, date_creation, email) "
-                f"VALUES ({ph(6)})",
-                (numero_mtn, nom, type_compte, solde_initial, datetime.now().isoformat(), email)
+                f"INSERT INTO comptes (numero_mtn, nom, type_compte, solde, date_creation, email, pin_hash) "
+                f"VALUES ({ph(7)})",
+                (numero_mtn, nom, type_compte, solde_initial, datetime.now().isoformat(), email, pin_hash)
             )
             conn.commit()
             print(f"✅ Compte créé: {numero_mtn} ({nom})")
@@ -140,6 +153,26 @@ class TransfertManager:
         except Exception as e:
             conn.rollback()
             print(f"❌ Compte déjà existant ou erreur: {e}")
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    def promouvoir_admin(self, numero_mtn: str) -> bool:
+        """Donne le rôle administrateur à un compte (opération irréversible via l'API, à faire manuellement)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            valeur_true = "TRUE" if USE_POSTGRES else "1"
+            cursor.execute(
+                f"UPDATE comptes SET is_admin = {valeur_true} WHERE numero_mtn = {p()}",
+                (numero_mtn,)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ Erreur promotion admin: {e}")
             return False
         finally:
             cursor.close()
