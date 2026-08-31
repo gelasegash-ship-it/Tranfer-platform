@@ -4,89 +4,186 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TRANSFER Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg-deep: #0B1226;
+    --bg-panel: #141D3B;
+    --bg-panel-2: #1B2547;
+    --gold: #E8A33D;
+    --gold-dim: #C98A2E;
+    --teal: #1FA98A;
+    --text-warm: #F4EFE6;
+    --text-muted: #8891AC;
+    --danger: #E5484D;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, system-ui, sans-serif;
-    background: linear-gradient(180deg, #0f172a, #1e3a8a, #0f172a);
-    color: white;
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-warm);
     min-height: 100vh;
-    padding: 20px;
+    padding: 0 0 40px;
   }
-  .container { max-width: 480px; margin: 0 auto; }
-  h1 { text-align: center; font-size: 2rem; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #93c5fd; font-size: 0.85rem; margin-bottom: 16px; }
-  .lang-selector { margin-bottom: 16px; }
+  .container { max-width: 480px; margin: 0 auto; padding: 0 20px; }
+
+  /* En-tête signature */
+  header { padding: 28px 20px 0; max-width: 480px; margin: 0 auto; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  h1 span { color: var(--gold); }
+  .subtitle { color: var(--text-muted); font-size: 0.82rem; margin-top: 6px; }
   .lang-selector select {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(59,130,246,0.4);
-    background: rgba(0,0,0,0.4);
-    color: white;
-    font-size: 0.95rem;
+    background: transparent;
+    border: 1px solid rgba(232,163,61,0.35);
+    color: var(--text-warm);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: 'IBM Plex Sans', sans-serif;
   }
-  .card {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(59,130,246,0.3);
-    border-radius: 16px;
+  .kente-divider {
+    height: 10px;
+    margin: 18px 0 0;
+    background-image: repeating-linear-gradient(
+      -45deg, var(--gold) 0 4px, transparent 4px 8px
+    );
+    opacity: 0.6;
+  }
+
+  .content { padding-top: 22px; }
+
+  .panel {
+    background: var(--bg-panel);
+    border-radius: 10px;
     padding: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
-  .balance { font-size: 2rem; font-weight: bold; margin: 8px 0; }
+  .panel-balance {
+    background: var(--bg-panel);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px 10px 10px 4px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .field-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .balance {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin: 4px 0;
+    transition: opacity 0.2s ease;
+  }
+
   input, select.field {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(59,130,246,0.4);
-    background: rgba(0,0,0,0.3);
-    color: white;
+    padding: 11px 4px;
+    margin-bottom: 16px;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--text-warm);
     font-size: 1rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    border-radius: 0;
   }
+  input:focus, select.field:focus {
+    outline: none;
+    border-bottom-color: var(--gold);
+  }
+  select.field option { background: var(--bg-panel); }
+
   button {
     width: 100%;
-    padding: 14px;
+    padding: 13px;
     border-radius: 8px;
     border: none;
-    background: linear-gradient(90deg, #3b82f6, #2563eb);
-    color: white;
-    font-weight: bold;
-    font-size: 1rem;
+    background: var(--gold);
+    color: #1a1300;
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-family: 'IBM Plex Sans', sans-serif;
     cursor: pointer;
     margin-bottom: 8px;
+    transition: background 0.15s ease;
   }
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+  button:hover { background: var(--gold-dim); }
+  button:active { transform: translateY(1px); }
+
+  .tabs {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
   .tab {
-    flex: 1;
-    padding: 10px 6px;
-    text-align: center;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
+    padding: 8px 2px 12px;
+    color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
   }
-  .tab.active { background: #3b82f6; }
+  .tab.active { color: var(--text-warm); border-bottom-color: var(--teal); }
+
   .hidden { display: none; }
-  .msg { padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; }
-  .msg.success { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); }
-  .msg.error { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); }
-  .txn { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; font-size: 0.85rem; }
-  .settings-toggle { text-align: center; font-size: 0.75rem; color: #93c5fd; margin-top: 20px; cursor: pointer; }
-  label.field-label { font-size: 0.8rem; color: #93c5fd; display: block; margin-bottom: 6px; }
+  .msg { padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; }
+  .msg.success { background: rgba(31,169,138,0.15); border: 1px solid rgba(31,169,138,0.4); color: #6EE7C5; }
+  .msg.error { background: rgba(229,72,77,0.15); border: 1px solid rgba(229,72,77,0.4); color: #FCA5A5; }
+
+  .txn {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.85rem;
+  }
+  .txn:last-child { border-bottom: none; }
+
+  .settings-toggle {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 24px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(136,145,172,0.3);
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>💸 TRANSFER</h1>
-  <p class="subtitle" data-i18n="slogan">Money moves fast • We move faster</p>
-
-  <div class="lang-selector">
-    <select id="langSelect" onchange="setLang(this.value)"></select>
+<header>
+  <div class="header-row">
+    <div>
+      <h1>💸 TRANSFER</h1>
+      <p class="subtitle" data-i18n="slogan">Money moves fast • We move faster</p>
+    </div>
+    <div class="lang-selector">
+      <select id="langSelect" onchange="setLang(this.value)"></select>
+    </div>
   </div>
+</header>
+<div class="kente-divider"></div>
 
-  <div class="card">
+<div class="container content">
+
+  <div class="panel">
     <label class="field-label" data-i18n="lbl_numero">Numéro MTN de test</label>
     <input id="numeroMtn" value="243777000000">
     <button onclick="chargerCompte()" data-i18n="btn_charger">🔍 Charger le compte</button>
@@ -94,10 +191,10 @@
 
   <div id="msgBox"></div>
 
-  <div id="compteInfo" class="card hidden">
+  <div id="compteInfo" class="panel-balance hidden">
     <div class="field-label" data-i18n="lbl_solde">Solde disponible</div>
     <div class="balance" id="soldeAffiche">-- XAF</div>
-    <div style="font-size:0.8rem;color:#94a3b8;" id="nomAffiche"></div>
+    <div style="font-size:0.8rem;color:var(--text-muted);" id="nomAffiche"></div>
   </div>
 
   <div class="tabs">
@@ -107,7 +204,7 @@
     <div class="tab" onclick="switchTab('historique')" id="tab-historique" data-i18n="tab_historique">Historique</div>
   </div>
 
-  <div id="panel-creer" class="card">
+  <div id="panel-creer" class="panel">
     <label class="field-label" data-i18n="lbl_nom">Nom complet</label>
     <input id="creerNom">
     <label class="field-label" data-i18n="lbl_numero_mtn">Numéro MTN</label>
@@ -124,7 +221,7 @@
     <button onclick="creerCompte()" data-i18n="btn_creer">➕ Créer le compte</button>
   </div>
 
-  <div id="panel-transfert" class="card hidden">
+  <div id="panel-transfert" class="panel hidden">
     <label class="field-label" data-i18n="lbl_agent_exp">Numéro MTN Agent (expéditeur)</label>
     <input id="transfertAgent">
     <label class="field-label" data-i18n="lbl_client_dest">Numéro MTN Client (destinataire)</label>
@@ -134,7 +231,7 @@
     <button onclick="effectuerTransfert()" data-i18n="btn_envoyer">📤 Envoyer</button>
   </div>
 
-  <div id="panel-retrait" class="card hidden">
+  <div id="panel-retrait" class="panel hidden">
     <label class="field-label" data-i18n="lbl_client_exp">Numéro MTN Client (expéditeur)</label>
     <input id="retraitClient">
     <label class="field-label" data-i18n="lbl_agent_dest">Numéro MTN Agent (destinataire)</label>
@@ -144,12 +241,12 @@
     <button onclick="effectuerRetrait()" data-i18n="btn_retirer">💳 Retirer</button>
   </div>
 
-  <div id="panel-historique" class="card hidden">
+  <div id="panel-historique" class="panel hidden">
     <div id="historiqueList" data-i18n="msg_charge_dabord">Charge un compte d'abord.</div>
   </div>
 
   <div class="settings-toggle" onclick="toggleSettings()" data-i18n="lbl_settings">⚙️ Configurer l'URL de l'API / clé</div>
-  <div id="settingsPanel" class="card hidden">
+  <div id="settingsPanel" class="panel hidden">
     <label class="field-label">URL de l'API</label>
     <input id="apiUrl" value="https://tranfer-platform-api.onrender.com">
     <label class="field-label">Clé API (X-API-Key)</label>
@@ -159,7 +256,6 @@
 </div>
 
 <script>
-// ============================================================================
 // TRADUCTIONS — 19 langues africaines + français + anglais
 // ============================================================================
 const LANGS = {
