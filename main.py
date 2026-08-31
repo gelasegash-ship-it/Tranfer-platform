@@ -54,6 +54,7 @@ class CompteCreate(BaseModel):
     type_compte: str  # AGENT, CLIENT, BENEFICIAIRE
     solde_initial: float = 0
     email: Optional[str] = None
+    pin: str  # 4 à 6 chiffres, obligatoire
 
 class Compte(BaseModel):
     numero_mtn: str
@@ -90,26 +91,50 @@ class TransfertResponse(BaseModel):
 # ============================================================================
 
 async def verify_api_key(request: Request):
-    """Vérifie la clé API"""
+    """Vérifie la clé API (réservée aux opérations admin internes : dépôts, promotion)"""
     api_key = request.headers.get('X-API-Key')
     if not api_key or api_key != API_KEY:
         raise HTTPException(status_code=401, detail="API Key invalide")
     return api_key
+
+async def get_current_account(request: Request) -> dict:
+    """Vérifie le token JWT de session et retourne les infos du compte connecté"""
+    from transfer_auth import decoder_token
+    import jwt as pyjwt
+
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    token = auth_header.replace('Bearer ', '')
+    try:
+        payload = decoder_token(token)
+    except pyjwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expirée, reconnecte-toi")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token invalide")
+
+    return {"numero_mtn": payload["sub"], "is_admin": payload.get("is_admin", False)}
 
 # ============================================================================
 # ENDPOINTS - COMPTES
 # ============================================================================
 
 @app.post("/api/comptes", tags=["Comptes"])
-async def creer_compte(compte: CompteCreate, api_key = Depends(verify_api_key)):
-    """Crée un nouveau compte"""
+async def creer_compte(compte: CompteCreate):
+    """Crée un nouveau compte (inscription libre, PIN obligatoire pour se connecter ensuite)"""
+    if not compte.pin or not compte.pin.isdigit() or not (4 <= len(compte.pin) <= 6):
+        raise HTTPException(status_code=400, detail="Le PIN doit contenir entre 4 et 6 chiffres")
+
+    from transfer_auth import hash_pin
     try:
         success = manager.creer_compte(
             numero_mtn=compte.numero_mtn,
             nom=compte.nom,
             type_compte=compte.type_compte,
             solde_initial=compte.solde_initial,
-            email=compte.email
+            email=compte.email,
+            pin_hash=hash_pin(compte.pin)
         )
         
         if success:
@@ -135,18 +160,24 @@ async def creer_compte(compte: CompteCreate, api_key = Depends(verify_api_key)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/comptes/{numero_mtn}", tags=["Comptes"])
-async def obtenir_compte(numero_mtn: str):
-    """Récupère les détails d'un compte"""
+async def obtenir_compte(numero_mtn: str, current = Depends(get_current_account)):
+    """Récupère les détails d'un compte (uniquement le sien, ou tout compte si admin)"""
+    if current["numero_mtn"] != numero_mtn and not current["is_admin"]:
+        raise HTTPException(status_code=403, detail="Tu ne peux consulter que ton propre compte")
+
     compte = manager.obtenir_compte(numero_mtn)
-    
+
     if not compte:
         raise HTTPException(status_code=404, detail="Compte non trouvé")
-    
+
+    compte.pop("pin_hash", None)
     return compte
 
 @app.get("/api/comptes", tags=["Comptes"])
-async def lister_comptes(type_compte: Optional[str] = None):
-    """Liste tous les comptes"""
+async def lister_comptes(type_compte: Optional[str] = None, current = Depends(get_current_account)):
+    """Liste tous les comptes (réservé aux administrateurs)"""
+    if not current["is_admin"]:
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")
     comptes = manager.lister_comptes(type_compte)
     return {"total": len(comptes), "comptes": comptes}
 
@@ -179,8 +210,11 @@ async def obtenir_statistiques(numero_mtn: str):
 # ============================================================================
 
 @app.post("/api/transferts", tags=["Transferts"])
-async def creer_transfert(req: TransfertRequest, api_key = Depends(verify_api_key)):
-    """Crée un transfert du agent vers client"""
+async def creer_transfert(req: TransfertRequest, current = Depends(get_current_account)):
+    """Crée un transfert du agent vers client (l'expéditeur doit être le compte connecté, sauf admin)"""
+    if current["numero_mtn"] != req.numero_mtn_agent and not current["is_admin"]:
+        raise HTTPException(status_code=403, detail="Tu ne peux envoyer de l'argent que depuis ton propre compte")
+
     success, result = manager.effectuer_transfert(
         numero_mtn_agent=req.numero_mtn_agent,
         numero_mtn_client=req.numero_mtn_client,
@@ -219,8 +253,11 @@ async def obtenir_transfert(transfer_id: str):
 # ============================================================================
 
 @app.post("/api/retraits", tags=["Retraits"])
-async def creer_retrait(req: RetraitRequest, api_key = Depends(verify_api_key)):
-    """Crée un retrait du client vers agent"""
+async def creer_retrait(req: RetraitRequest, current = Depends(get_current_account)):
+    """Crée un retrait du client vers agent (le client doit être le compte connecté, sauf admin)"""
+    if current["numero_mtn"] != req.numero_mtn_client and not current["is_admin"]:
+        raise HTTPException(status_code=403, detail="Tu ne peux retirer que depuis ton propre compte")
+
     success, result = manager.effectuer_retrait(
         numero_mtn_client=req.numero_mtn_client,
         numero_mtn_agent=req.numero_mtn_agent,
@@ -421,6 +458,47 @@ async def lier_wallet(req: WalletLinkRequest):
 
     return {"success": True, "numero_mtn": req.numero_mtn, "wallet_address": req.wallet_address}
 
+
+# ============================================================================
+# ENDPOINTS - AUTHENTIFICATION
+# ============================================================================
+
+class LoginRequest(BaseModel):
+    numero_mtn: str
+    pin: str
+
+@app.post("/api/auth/login", tags=["Authentification"])
+async def login(req: LoginRequest):
+    """Connexion par numéro MTN + PIN, retourne un token de session"""
+    compte = manager.obtenir_compte(req.numero_mtn)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte non trouvé")
+
+    from transfer_auth import verifier_pin, creer_token
+    if not verifier_pin(req.pin, compte.get("pin_hash")):
+        raise HTTPException(status_code=401, detail="PIN incorrect")
+
+    is_admin = bool(compte.get("is_admin", False))
+    token = creer_token(req.numero_mtn, is_admin)
+
+    return {
+        "access_token": token,
+        "numero_mtn": req.numero_mtn,
+        "nom": compte["nom"],
+        "is_admin": is_admin
+    }
+
+
+class PromoteRequest(BaseModel):
+    numero_mtn: str
+
+@app.post("/api/admin/promouvoir", tags=["Authentification"])
+async def promouvoir_admin(req: PromoteRequest, api_key = Depends(verify_api_key)):
+    """Donne le rôle administrateur à un compte (protégé par la clé API du serveur)"""
+    success = manager.promouvoir_admin(req.numero_mtn)
+    if not success:
+        raise HTTPException(status_code=404, detail="Compte non trouvé")
+    return {"success": True, "numero_mtn": req.numero_mtn, "message": "Compte promu administrateur"}
 
 
 @app.get("/health", tags=["Health"])
