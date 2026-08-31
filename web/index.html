@@ -695,6 +695,11 @@ async function connecterWallet() {
     showMsg("Aucun wallet détecté. Ouvre cette page dans le navigateur intégré de Trust Wallet.", 'error');
     return;
   }
+  const numero = document.getElementById('numeroMtn').value.trim();
+  if (!numero) {
+    showMsg("Charge d'abord un compte avant de connecter un wallet.", 'error');
+    return;
+  }
   try {
     const comptes = await eth.request({ method: 'eth_requestAccounts' });
     walletAddress = comptes[0];
@@ -703,7 +708,21 @@ async function connecterWallet() {
     document.getElementById('walletAddress').textContent =
       '✓ ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
     localStorage.setItem('walletAddress', walletAddress);
-    showMsg('Wallet connecté', 'success');
+
+    // Signature de propriété + liaison au compte côté serveur
+    const message = `TRANSFER Platform - Lier ce wallet au compte ${numero}\nHorodatage: ${Date.now()}`;
+    const signature = await eth.request({
+      method: 'personal_sign',
+      params: [message, walletAddress]
+    });
+
+    await fetch(API_URL + '/api/wallets/link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero_mtn: numero, wallet_address: walletAddress, message, signature })
+    });
+
+    showMsg('Wallet connecté et lié au compte', 'success');
 
     eth.on && eth.on('accountsChanged', (accs) => {
       if (accs.length === 0) deconnecterWallet();
