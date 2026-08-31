@@ -1,23 +1,21 @@
 """
 TRANSFER PLATFORM - Authentification
-PIN hashé (bcrypt) + tokens JWT + rôle administrateur
+PIN hashé (bcrypt direct) + tokens JWT + rôle administrateur
 """
 
 import os
+import bcrypt
 import jwt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 
 JWT_SECRET = os.getenv('JWT_SECRET', 'change-moi-en-production-clé-longue-aléatoire')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 7
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_pin(pin: str) -> str:
     """Hash un PIN (jamais stocké en clair)"""
-    return pwd_context.hash(pin)
+    return bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def verifier_pin(pin: str, pin_hash: str) -> bool:
@@ -25,7 +23,7 @@ def verifier_pin(pin: str, pin_hash: str) -> bool:
     if not pin_hash:
         return False
     try:
-        return pwd_context.verify(pin, pin_hash)
+        return bcrypt.checkpw(pin.encode('utf-8'), pin_hash.encode('utf-8'))
     except Exception:
         return False
 
