@@ -101,6 +101,12 @@ class TransfertManager:
         except Exception:
             conn.rollback()
 
+        try:
+            cursor.execute("ALTER TABLE comptes ADD COLUMN abonnement_expire TEXT")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transferts (
                 id TEXT PRIMARY KEY,
@@ -134,6 +140,11 @@ class TransfertManager:
         conn.commit()
         cursor.close()
         conn.close()
+
+        # Créer le compte système qui collecte tous les frais de transaction
+        if not self.obtenir_compte("PLATFORM_REVENUE"):
+            self.creer_compte("PLATFORM_REVENUE", "Revenus Plateforme TRANSFER", "SYSTEME", 0)
+
         print(f"✅ Base de données initialisée ({'PostgreSQL' if USE_POSTGRES else 'SQLite'})")
 
     def creer_compte(self, numero_mtn: str, nom: str, type_compte: str,
@@ -270,6 +281,17 @@ class TransfertManager:
                 (nouveau_solde_dest, destinataire)
             )
 
+            # Les frais sont réellement crédités au compte de revenus de la plateforme
+            if frais > 0:
+                cursor.execute(f"SELECT solde FROM comptes WHERE numero_mtn = {p()}", ("PLATFORM_REVENUE",))
+                revenue_row = self._dict(cursor.fetchone())
+                if revenue_row:
+                    nouveau_solde_revenue = revenue_row['solde'] + frais
+                    cursor.execute(
+                        f"UPDATE comptes SET solde = {p()} WHERE numero_mtn = {p()}",
+                        (nouveau_solde_revenue, "PLATFORM_REVENUE")
+                    )
+
             cursor.execute(
                 f"UPDATE transferts SET status = {p()}, date_completion = {p()} WHERE id = {p()}",
                 (StatusTransfert.COMPLETED.value, date_now, transfer_id)
@@ -337,6 +359,53 @@ class TransfertManager:
         cursor.close()
         conn.close()
         return [self._dict(r) for r in rows]
+
+    def souscrire_premium(self, numero_mtn: str, prix: float = 2000) -> Tuple[bool, str]:
+        """Débite le compte du prix de l'abonnement, crédite la plateforme, prolonge l'abonnement de 30 jours"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"SELECT * FROM comptes WHERE numero_mtn = {p()}", (numero_mtn,))
+            compte = self._dict(cursor.fetchone())
+            if not compte:
+                return False, "Compte non trouvé"
+            if compte['solde'] < prix:
+                return False, f"Solde insuffisant pour l'abonnement ({prix} XAF requis)"
+
+            from datetime import timedelta
+            expire_actuel = compte.get('abonnement_expire')
+            base_date = datetime.now()
+            if expire_actuel:
+                try:
+                    expire_dt = datetime.fromisoformat(expire_actuel)
+                    if expire_dt > base_date:
+                        base_date = expire_dt
+                except Exception:
+                    pass
+            nouvelle_expiration = (base_date + timedelta(days=30)).isoformat()
+
+            nouveau_solde = compte['solde'] - prix
+            cursor.execute(
+                f"UPDATE comptes SET solde = {p()}, abonnement_expire = {p()} WHERE numero_mtn = {p()}",
+                (nouveau_solde, nouvelle_expiration, numero_mtn)
+            )
+
+            cursor.execute(f"SELECT solde FROM comptes WHERE numero_mtn = {p()}", ("PLATFORM_REVENUE",))
+            revenue = self._dict(cursor.fetchone())
+            if revenue:
+                cursor.execute(
+                    f"UPDATE comptes SET solde = {p()} WHERE numero_mtn = {p()}",
+                    (revenue['solde'] + prix, "PLATFORM_REVENUE")
+                )
+
+            conn.commit()
+            return True, nouvelle_expiration
+        except Exception as e:
+            conn.rollback()
+            return False, str(e)
+        finally:
+            cursor.close()
+            conn.close()
 
     def lier_wallet(self, numero_mtn: str, wallet_address: str) -> bool:
         conn = self.get_connection()
