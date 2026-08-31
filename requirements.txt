@@ -5,3 +5,4 @@ python-dotenv==1.0.0
 python-multipart==0.0.6
 psycopg2-binary==2.9.9
 requests==2.31.0
+twilio==8.10.0
