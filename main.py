@@ -278,37 +278,49 @@ async def obtenir_historique(numero_mtn: str, limit: int = 50):
 
 @app.post("/webhooks/paypal", tags=["Webhooks"])
 async def webhook_paypal(request: Request):
-    """Webhook PayPal pour les paiements"""
+    """Webhook PayPal pour les paiements (avec vérification de signature réelle)"""
     body = await request.body()
-    
-    # Vérifier la signature
-    headers = request.headers
-    signature = headers.get('PAYPAL-TRANSMISSION-SIG')
-    
-    # Logique de vérification (simplifié)
-    if not verify_paypal_signature(body, signature):
-        raise HTTPException(status_code=401, detail="Signature invalide")
-    
+    headers = dict(request.headers)
+
+    from transfer_paypal import verifier_signature_webhook, PAYPAL_ENABLED
+
+    if not PAYPAL_ENABLED:
+        raise HTTPException(status_code=503, detail="PayPal non configuré sur ce serveur")
+
+    if not verifier_signature_webhook(headers, body):
+        raise HTTPException(status_code=401, detail="Signature webhook invalide")
+
     data = json.loads(body)
     event_type = data.get('event_type')
-    
-    # Traiter les événements
-    if event_type == 'PAYMENT.SALE.COMPLETED':
-        # Créer un dépôt automatique
-        transaction = data.get('resource', {})
-        numero_mtn = transaction.get('custom_id')  # Doit être stocké lors du paiement
-        montant = float(transaction.get('amount', {}).get('total', 0))
-        
-        if numero_mtn:
+
+    if event_type == 'PAYMENT.CAPTURE.COMPLETED' or event_type == 'CHECKOUT.ORDER.APPROVED':
+        resource = data.get('resource', {})
+        purchase_units = resource.get('purchase_units', [{}])
+        numero_mtn = purchase_units[0].get('custom_id') if purchase_units else None
+        montant = float(resource.get('amount', {}).get('value', 0))
+
+        if numero_mtn and montant > 0:
             success, result = manager.effectuer_depot(numero_mtn, montant)
             return {"success": success, "deposit_id": result}
-    
+
     return {"success": True, "message": "Webhook reçu"}
 
-def verify_paypal_signature(body: bytes, signature: str) -> bool:
-    """Vérifie la signature PayPal"""
-    # Implémentation simplifiée - à améliorer avec vraie vérification
-    return len(signature) > 0
+
+@app.post("/api/paypal/creer-paiement", tags=["PayPal"])
+async def creer_paiement_paypal_endpoint(numero_mtn: str, montant: float,
+                                          devise: str = "USD",
+                                          api_key = Depends(verify_api_key)):
+    """Crée un lien de paiement PayPal pour recharger un compte TRANSFER"""
+    from transfer_paypal import creer_paiement_paypal, PAYPAL_ENABLED
+
+    if not PAYPAL_ENABLED:
+        raise HTTPException(status_code=503, detail="PayPal non configuré sur ce serveur")
+
+    try:
+        resultat = creer_paiement_paypal(montant, devise, numero_mtn)
+        return resultat
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
 # ENDPOINTS - INTÉGRATION STRIPE (Webhook)
