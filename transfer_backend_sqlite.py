@@ -8,7 +8,6 @@ import os
 import uuid
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
 from enum import Enum
 
 DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
@@ -78,7 +77,6 @@ class TransfertManager:
             )
         """)
 
-        # Ajoute la colonne email si elle n'existe pas déjà (mise à jour d'un schéma existant)
         try:
             cursor.execute("ALTER TABLE comptes ADD COLUMN email TEXT")
             conn.commit()
@@ -240,7 +238,6 @@ class TransfertManager:
 
             conn.commit()
 
-            # Notification email (best-effort, ne bloque jamais la transaction si ça échoue)
             try:
                 from transfer_notifications import notifier_transaction
                 notifier_transaction(
@@ -256,6 +253,20 @@ class TransfertManager:
                 )
             except Exception as notif_error:
                 print(f"⚠️ Notification email échouée (transaction OK quand même): {notif_error}")
+
+            try:
+                from transfer_sms import notifier_transaction_sms
+                notifier_transaction_sms(
+                    numero_expediteur=expediteur,
+                    numero_destinataire=destinataire,
+                    type_operation=type_operation,
+                    montant=montant,
+                    frais=frais,
+                    status=StatusTransfert.COMPLETED.value,
+                    transaction_id=transfer_id
+                )
+            except Exception as sms_error:
+                print(f"⚠️ Notification SMS échouée (transaction OK quand même): {sms_error}")
 
             return True, transfer_id
 
