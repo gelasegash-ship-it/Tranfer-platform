@@ -83,6 +83,12 @@ class TransfertManager:
         except Exception:
             conn.rollback()
 
+        try:
+            cursor.execute("ALTER TABLE comptes ADD COLUMN wallet_address TEXT")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transferts (
                 id TEXT PRIMARY KEY,
@@ -298,6 +304,24 @@ class TransfertManager:
         cursor.close()
         conn.close()
         return [self._dict(r) for r in rows]
+
+    def lier_wallet(self, numero_mtn: str, wallet_address: str) -> bool:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                f"UPDATE comptes SET wallet_address = {p()} WHERE numero_mtn = {p()}",
+                (wallet_address, numero_mtn)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ Erreur liaison wallet: {e}")
+            return False
+        finally:
+            cursor.close()
+            conn.close()
 
     def obtenir_statistiques(self, numero_mtn: str) -> Dict:
         compte = self.obtenir_compte(numero_mtn)
