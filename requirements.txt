@@ -7,4 +7,4 @@ psycopg2-binary==2.9.9
 requests==2.31.0
 twilio==8.10.0
 PyJWT==2.9.0
-passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
