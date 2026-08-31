@@ -253,6 +253,20 @@
     <input id="apiKey" value="">
     <button onclick="sauverConfig()" data-i18n="btn_sauver">💾 Sauvegarder</button>
   </div>
+
+  <div class="panel" id="walletPanel">
+    <label class="field-label">🔗 Wallet crypto</label>
+    <div id="walletDisconnected">
+      <button onclick="connecterWallet()">🛡️ Connecter Trust Wallet</button>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">
+        Ouvre cette page dans le navigateur intégré de Trust Wallet pour connecter.
+      </div>
+    </div>
+    <div id="walletConnected" class="hidden">
+      <div style="font-size:0.85rem;color:var(--teal);" id="walletAddress"></div>
+      <button onclick="deconnecterWallet()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--text-warm);margin-top:8px;">Déconnecter</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -669,6 +683,64 @@ async function chargerHistorique() {
     list.innerHTML = 'Erreur';
   }
 }
+
+// ============================================================================
+// WALLET CRYPTO (Trust Wallet / MetaMask via injected provider — vanilla JS)
+// ============================================================================
+let walletAddress = null;
+
+async function connecterWallet() {
+  const eth = window.ethereum;
+  if (!eth) {
+    showMsg("Aucun wallet détecté. Ouvre cette page dans le navigateur intégré de Trust Wallet.", 'error');
+    return;
+  }
+  try {
+    const comptes = await eth.request({ method: 'eth_requestAccounts' });
+    walletAddress = comptes[0];
+    document.getElementById('walletDisconnected').classList.add('hidden');
+    document.getElementById('walletConnected').classList.remove('hidden');
+    document.getElementById('walletAddress').textContent =
+      '✓ ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    localStorage.setItem('walletAddress', walletAddress);
+    showMsg('Wallet connecté', 'success');
+
+    eth.on && eth.on('accountsChanged', (accs) => {
+      if (accs.length === 0) deconnecterWallet();
+      else {
+        walletAddress = accs[0];
+        document.getElementById('walletAddress').textContent =
+          '✓ ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+      }
+    });
+  } catch (e) {
+    showMsg(e.message, 'error');
+  }
+}
+
+function deconnecterWallet() {
+  walletAddress = null;
+  localStorage.removeItem('walletAddress');
+  document.getElementById('walletDisconnected').classList.remove('hidden');
+  document.getElementById('walletConnected').classList.add('hidden');
+}
+
+// Reconnexion silencieuse si déjà connecté précédemment
+(async function restaurerWallet() {
+  const saved = localStorage.getItem('walletAddress');
+  if (saved && window.ethereum) {
+    try {
+      const comptes = await window.ethereum.request({ method: 'eth_accounts' });
+      if (comptes.includes(saved)) {
+        walletAddress = saved;
+        document.getElementById('walletDisconnected').classList.add('hidden');
+        document.getElementById('walletConnected').classList.remove('hidden');
+        document.getElementById('walletAddress').textContent =
+          '✓ ' + saved.slice(0, 6) + '...' + saved.slice(-4);
+      }
+    } catch (e) { /* silencieux */ }
+  }
+})();
 </script>
 </body>
 </html>
