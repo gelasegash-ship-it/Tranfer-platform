@@ -11,7 +11,6 @@
   :root {
     --bg-deep: #0B1226;
     --bg-panel: #141D3B;
-    --bg-panel-2: #1B2547;
     --gold: #E8A33D;
     --gold-dim: #C98A2E;
     --teal: #1FA98A;
@@ -28,146 +27,98 @@
     padding: 0 0 40px;
   }
   .container { max-width: 480px; margin: 0 auto; padding: 0 20px; }
-
-  /* En-tête signature */
   header { padding: 28px 20px 0; max-width: 480px; margin: 0 auto; }
   .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.9rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
   h1 span { color: var(--gold); }
   .subtitle { color: var(--text-muted); font-size: 0.82rem; margin-top: 6px; }
   .lang-selector select {
-    background: transparent;
-    border: 1px solid rgba(232,163,61,0.35);
-    color: var(--text-warm);
-    padding: 7px 10px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-family: 'IBM Plex Sans', sans-serif;
+    background: transparent; border: 1px solid rgba(232,163,61,0.35); color: var(--text-warm);
+    padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; font-family: 'IBM Plex Sans', sans-serif;
   }
   .kente-divider {
-    height: 10px;
-    margin: 18px 0 0;
-    background-image: repeating-linear-gradient(
-      -45deg, var(--gold) 0 4px, transparent 4px 8px
-    );
+    height: 10px; margin: 18px 0 0;
+    background-image: repeating-linear-gradient(-45deg, var(--gold) 0 4px, transparent 4px 8px);
     opacity: 0.6;
   }
-
   .content { padding-top: 22px; }
-
-  .panel {
-    background: var(--bg-panel);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
-  .panel-balance {
-    background: var(--bg-panel);
-    border-left: 3px solid var(--gold);
-    border-radius: 4px 10px 10px 4px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
-  .field-label {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 6px;
-  }
-  .balance {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2.1rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    margin: 4px 0;
-    transition: opacity 0.2s ease;
-  }
-
+  .panel { background: var(--bg-panel); border-radius: 10px; padding: 20px; margin-bottom: 14px; }
+  .panel-balance { background: var(--bg-panel); border-left: 3px solid var(--gold); border-radius: 4px 10px 10px 4px; padding: 20px; margin-bottom: 14px; }
+  .panel-admin { background: var(--bg-panel); border-left: 3px solid var(--danger); border-radius: 4px 10px 10px 4px; padding: 16px 20px; margin-bottom: 14px; font-size: 0.8rem; }
+  .field-label { font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  .balance { font-family: 'Space Grotesk', sans-serif; font-size: 2.1rem; font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0; }
   input, select.field {
-    width: 100%;
-    padding: 11px 4px;
-    margin-bottom: 16px;
-    border: none;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-    background: transparent;
-    color: var(--text-warm);
-    font-size: 1rem;
-    font-family: 'IBM Plex Sans', sans-serif;
-    border-radius: 0;
+    width: 100%; padding: 11px 4px; margin-bottom: 16px; border: none; border-bottom: 1px solid rgba(255,255,255,0.15);
+    background: transparent; color: var(--text-warm); font-size: 1rem; font-family: 'IBM Plex Sans', sans-serif; border-radius: 0;
   }
-  input:focus, select.field:focus {
-    outline: none;
-    border-bottom-color: var(--gold);
-  }
+  input:disabled { opacity: 0.55; }
+  input:focus, select.field:focus { outline: none; border-bottom-color: var(--gold); }
   select.field option { background: var(--bg-panel); }
-
   button {
-    width: 100%;
-    padding: 13px;
-    border-radius: 8px;
-    border: none;
-    background: var(--gold);
-    color: #1a1300;
-    font-weight: 600;
-    font-size: 0.95rem;
-    font-family: 'IBM Plex Sans', sans-serif;
-    cursor: pointer;
-    margin-bottom: 8px;
+    width: 100%; padding: 13px; border-radius: 8px; border: none; background: var(--gold); color: #1a1300;
+    font-weight: 600; font-size: 0.95rem; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; margin-bottom: 8px;
     transition: background 0.15s ease;
   }
   button:hover { background: var(--gold-dim); }
   button:active { transform: translateY(1px); }
-
-  .tabs {
-    display: flex;
-    gap: 18px;
-    margin-bottom: 18px;
-    overflow-x: auto;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-  .tab {
-    padding: 8px 2px 12px;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-  }
+  button.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-warm); }
+  .tabs { display: flex; gap: 18px; margin-bottom: 18px; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .tab { padding: 8px 2px 12px; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
   .tab.active { color: var(--text-warm); border-bottom-color: var(--teal); }
-
   .hidden { display: none; }
   .msg { padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem; }
   .msg.success { background: rgba(31,169,138,0.15); border: 1px solid rgba(31,169,138,0.4); color: #6EE7C5; }
   .msg.error { background: rgba(229,72,77,0.15); border: 1px solid rgba(229,72,77,0.4); color: #FCA5A5; }
-
-  .txn {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    font-size: 0.85rem;
-  }
+  .txn { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.85rem; }
   .txn:last-child { border-bottom: none; }
-
-  .settings-toggle {
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 24px;
-    cursor: pointer;
-    text-decoration: underline;
-    text-decoration-color: rgba(136,145,172,0.3);
-  }
+  .settings-toggle { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 24px; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(136,145,172,0.3); }
+  .login-screen { max-width: 400px; margin: 8vh auto 0; padding: 0 20px; }
+  .login-screen h1 { text-align: center; }
+  .login-screen .subtitle { text-align: center; margin-bottom: 28px; }
+  .login-toggle { text-align: center; font-size: 0.82rem; color: var(--teal); cursor: pointer; margin-top: 10px; text-decoration: underline; }
 </style>
 </head>
 <body>
+
+<div id="loginScreen" class="login-screen">
+  <h1>💸 <span>TRANSFER</span></h1>
+  <p class="subtitle">Money moves fast • We move faster</p>
+  <div id="msgBoxLogin"></div>
+  <div class="panel">
+    <label class="field-label">Numéro MTN</label>
+    <input id="loginNumero" value="">
+    <label class="field-label">PIN (4 à 6 chiffres)</label>
+    <input id="loginPin" type="password" inputmode="numeric" maxlength="6">
+    <button onclick="seConnecter()">🔐 Se connecter</button>
+  </div>
+  <div class="login-toggle" onclick="afficherInscription()">Pas encore de compte ? Créer un compte</div>
+  <div id="inscriptionPanel" class="panel hidden" style="margin-top:14px;">
+    <label class="field-label">Nom complet</label>
+    <input id="regNom">
+    <label class="field-label">Numéro MTN</label>
+    <input id="regNumero">
+    <label class="field-label">Type de compte</label>
+    <select id="regType" class="field">
+      <option value="CLIENT">Client</option>
+      <option value="AGENT">Agent</option>
+    </select>
+    <label class="field-label">PIN (4 à 6 chiffres) — à retenir, c'est ton mot de passe</label>
+    <input id="regPin" type="password" inputmode="numeric" maxlength="6">
+    <label class="field-label">Email (optionnel)</label>
+    <input id="regEmail" type="email">
+    <label class="field-label">Solde initial (optionnel)</label>
+    <input id="regSolde" type="number">
+    <button onclick="creerCompteEtConnecter()">➕ Créer mon compte</button>
+  </div>
+  <div class="settings-toggle" onclick="toggleSettings()">⚙️ Configurer l'URL de l'API</div>
+  <div id="settingsPanel" class="panel hidden">
+    <label class="field-label">URL de l'API</label>
+    <input id="apiUrl" value="https://tranfer-platform-api.onrender.com">
+    <button onclick="sauverConfig()">💾 Sauvegarder</button>
+  </div>
+</div>
+
+<div id="appScreen" class="hidden">
 <header>
   <div class="header-row">
     <div>
@@ -180,98 +131,61 @@
   </div>
 </header>
 <div class="kente-divider"></div>
-
 <div class="container content">
-
-  <div class="panel">
-    <label class="field-label" data-i18n="lbl_numero">Numéro MTN de test</label>
-    <input id="numeroMtn" value="243777000000">
-    <button onclick="chargerCompte()" data-i18n="btn_charger">🔍 Charger le compte</button>
-  </div>
-
   <div id="msgBox"></div>
-
-  <div id="compteInfo" class="panel-balance hidden">
+  <div id="adminBanner" class="panel-admin hidden">👑 Connecté en tant qu'administrateur — accès à tous les comptes</div>
+  <div id="compteInfo" class="panel-balance">
     <div class="field-label" data-i18n="lbl_solde">Solde disponible</div>
     <div class="balance" id="soldeAffiche">-- XAF</div>
     <div style="font-size:0.8rem;color:var(--text-muted);" id="nomAffiche"></div>
   </div>
-
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('creer')" id="tab-creer" data-i18n="tab_creer">Créer</div>
-    <div class="tab" onclick="switchTab('transfert')" id="tab-transfert" data-i18n="tab_transfert">Transfert</div>
+    <div class="tab active" onclick="switchTab('transfert')" id="tab-transfert" data-i18n="tab_transfert">Transfert</div>
     <div class="tab" onclick="switchTab('retrait')" id="tab-retrait" data-i18n="tab_retrait">Retrait</div>
     <div class="tab" onclick="switchTab('historique')" id="tab-historique" data-i18n="tab_historique">Historique</div>
+    <div class="tab hidden" onclick="switchTab('admin')" id="tab-admin">Admin</div>
   </div>
-
-  <div id="panel-creer" class="panel">
-    <label class="field-label" data-i18n="lbl_nom">Nom complet</label>
-    <input id="creerNom">
-    <label class="field-label" data-i18n="lbl_numero_mtn">Numéro MTN</label>
-    <input id="creerNumero">
-    <label class="field-label" data-i18n="lbl_type_compte">Type de compte</label>
-    <select id="creerType" class="field">
-      <option value="CLIENT" data-i18n="opt_client">Client</option>
-      <option value="AGENT" data-i18n="opt_agent">Agent</option>
-    </select>
-    <label class="field-label" data-i18n="lbl_solde_initial">Solde initial (optionnel)</label>
-    <input id="creerSolde" type="number">
-    <label class="field-label" data-i18n="lbl_email">Email (pour recevoir les notifications, optionnel)</label>
-    <input id="creerEmail" type="email">
-    <button onclick="creerCompte()" data-i18n="btn_creer">➕ Créer le compte</button>
-  </div>
-
-  <div id="panel-transfert" class="panel hidden">
-    <label class="field-label" data-i18n="lbl_agent_exp">Numéro MTN Agent (expéditeur)</label>
-    <input id="transfertAgent">
+  <div id="panel-transfert" class="panel">
+    <label class="field-label">De (ton compte)</label>
+    <input id="transfertAgent" disabled>
     <label class="field-label" data-i18n="lbl_client_dest">Numéro MTN Client (destinataire)</label>
     <input id="transfertClient">
     <label class="field-label" data-i18n="lbl_montant">Montant</label>
     <input id="transfertMontant" type="number">
     <button onclick="effectuerTransfert()" data-i18n="btn_envoyer">📤 Envoyer</button>
   </div>
-
   <div id="panel-retrait" class="panel hidden">
-    <label class="field-label" data-i18n="lbl_client_exp">Numéro MTN Client (expéditeur)</label>
-    <input id="retraitClient">
+    <label class="field-label">De (ton compte)</label>
+    <input id="retraitClient" disabled>
     <label class="field-label" data-i18n="lbl_agent_dest">Numéro MTN Agent (destinataire)</label>
     <input id="retraitAgent">
     <label class="field-label" data-i18n="lbl_montant">Montant</label>
     <input id="retraitMontant" type="number">
     <button onclick="effectuerRetrait()" data-i18n="btn_retirer">💳 Retirer</button>
   </div>
-
   <div id="panel-historique" class="panel hidden">
     <div id="historiqueList" data-i18n="msg_charge_dabord">Charge un compte d'abord.</div>
   </div>
-
-  <div class="settings-toggle" onclick="toggleSettings()" data-i18n="lbl_settings">⚙️ Configurer l'URL de l'API / clé</div>
-  <div id="settingsPanel" class="panel hidden">
-    <label class="field-label">URL de l'API</label>
-    <input id="apiUrl" value="https://tranfer-platform-api.onrender.com">
-    <label class="field-label">Clé API (X-API-Key)</label>
-    <input id="apiKey" value="">
-    <button onclick="sauverConfig()" data-i18n="btn_sauver">💾 Sauvegarder</button>
+  <div id="panel-admin" class="panel hidden">
+    <div class="field-label">Tous les comptes de la plateforme</div>
+    <div id="adminCompteList" style="max-height:300px;overflow-y:auto;"></div>
   </div>
-
   <div class="panel" id="walletPanel">
     <label class="field-label">🔗 Wallet crypto</label>
     <div id="walletDisconnected">
       <button onclick="connecterWallet()">🛡️ Connecter Trust Wallet</button>
-      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">
-        Ouvre cette page dans le navigateur intégré de Trust Wallet pour connecter.
-      </div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">Ouvre cette page dans le navigateur intégré de Trust Wallet pour connecter.</div>
     </div>
     <div id="walletConnected" class="hidden">
       <div style="font-size:0.85rem;color:var(--teal);" id="walletAddress"></div>
-      <button onclick="deconnecterWallet()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--text-warm);margin-top:8px;">Déconnecter</button>
+      <button onclick="deconnecterWallet()" class="ghost" style="margin-top:8px;">Déconnecter</button>
     </div>
   </div>
+  <button class="ghost" onclick="seDeconnecter()">🚪 Déconnexion</button>
+</div>
 </div>
 
 <script>
-// TRADUCTIONS — 19 langues africaines + français + anglais
-// ============================================================================
 const LANGS = {
   fr: { name: "🇫🇷 Français", t: {
     slogan: "Money moves fast • We move faster", lbl_numero: "Numéro MTN de test",
@@ -525,21 +439,24 @@ const LANGS = {
 };
 
 let currentLang = localStorage.getItem('lang') || 'fr';
+let API_URL = localStorage.getItem('apiUrl') || 'https://tranfer-platform-api.onrender.com';
+let authToken = localStorage.getItem('authToken') || null;
+let currentNumero = localStorage.getItem('currentNumero') || null;
+let isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+document.getElementById('apiUrl').value = API_URL;
 
 function buildLangSelector() {
   const sel = document.getElementById('langSelect');
-  sel.innerHTML = Object.entries(LANGS).map(([code, l]) =>
-    `<option value="${code}">${l.name}</option>`
-  ).join('');
+  if (!sel) return;
+  sel.innerHTML = Object.entries(LANGS).map(([code, l]) => `<option value="${code}">${l.name}</option>`).join('');
   sel.value = currentLang;
 }
-
 function setLang(code) {
   currentLang = code;
   localStorage.setItem('lang', code);
   applyTranslations();
 }
-
 function applyTranslations() {
   const dict = LANGS[currentLang].t;
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -551,192 +468,210 @@ function applyTranslations() {
   });
 }
 
-buildLangSelector();
-applyTranslations();
-
-// ============================================================================
-// LOGIQUE API (identique à avant)
-// ============================================================================
-let API_URL = localStorage.getItem('apiUrl') || 'https://tranfer-platform-api.onrender.com';
-let API_KEY = localStorage.getItem('apiKey') || '';
-document.getElementById('apiUrl').value = API_URL;
-document.getElementById('apiKey').value = API_KEY;
-
-function toggleSettings() {
-  document.getElementById('settingsPanel').classList.toggle('hidden');
-}
-
+function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
 function sauverConfig() {
   API_URL = document.getElementById('apiUrl').value.trim();
-  API_KEY = document.getElementById('apiKey').value.trim();
   localStorage.setItem('apiUrl', API_URL);
-  localStorage.setItem('apiKey', API_KEY);
-  showMsg('OK', 'success');
+  showMsgLogin('Configuration sauvegardée', 'success');
 }
+function afficherInscription() { document.getElementById('inscriptionPanel').classList.toggle('hidden'); }
 
+function showMsgLogin(text, type) {
+  const box = document.getElementById('msgBoxLogin');
+  box.innerHTML = `<div class="msg ${type}">${text}</div>`;
+  setTimeout(() => { box.innerHTML = ''; }, 6000);
+}
 function showMsg(text, type) {
   const box = document.getElementById('msgBox');
   box.innerHTML = `<div class="msg ${type}">${text}</div>`;
-  setTimeout(() => { box.innerHTML = ''; }, 5000);
+  setTimeout(() => { box.innerHTML = ''; }, 6000);
 }
 
-function switchTab(name) {
-  ['creer','transfert','retrait','historique'].forEach(t => {
-    document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
-    document.getElementById('tab-' + t).classList.toggle('active', t === name);
-  });
-  if (name === 'historique') chargerHistorique();
-}
+// ============================================================================
+// AUTHENTIFICATION
+// ============================================================================
 
-async function apiCall(path, method = 'GET', body = null, needsKey = false) {
+async function apiCall(path, method = 'GET', body = null, auth = false) {
   const headers = { 'Content-Type': 'application/json' };
-  if (needsKey) headers['X-API-Key'] = API_KEY;
+  if (auth && authToken) headers['Authorization'] = 'Bearer ' + authToken;
   const options = { method, headers };
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(API_URL + path, options);
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || data.detail || 'Error');
+  if (!res.ok) throw new Error(data.message || data.detail || 'Erreur');
   return data;
 }
 
-async function chargerCompte() {
-  const numero = document.getElementById('numeroMtn').value.trim();
-  if (!numero) return showMsg('Numéro requis', 'error');
+async function seConnecter() {
+  const numero_mtn = document.getElementById('loginNumero').value.trim();
+  const pin = document.getElementById('loginPin').value.trim();
+  if (!numero_mtn || !pin) return showMsgLogin('Numéro et PIN requis', 'error');
   try {
-    const compte = await apiCall(`/api/comptes/${numero}`);
-    document.getElementById('compteInfo').classList.remove('hidden');
-    document.getElementById('soldeAffiche').textContent =
-      new Intl.NumberFormat('fr-FR').format(compte.solde) + ' XAF';
-    document.getElementById('nomAffiche').textContent =
-      `${compte.nom} • ${compte.type_compte}`;
-    showMsg('OK', 'success');
+    const res = await apiCall('/api/auth/login', 'POST', { numero_mtn, pin });
+    authToken = res.access_token;
+    currentNumero = res.numero_mtn;
+    isAdmin = res.is_admin;
+    localStorage.setItem('authToken', authToken);
+    localStorage.setItem('currentNumero', currentNumero);
+    localStorage.setItem('isAdmin', isAdmin);
+    demarrerApp();
   } catch (e) {
-    document.getElementById('compteInfo').classList.add('hidden');
-    showMsg(e.message, 'error');
+    showMsgLogin(e.message, 'error');
   }
 }
 
-async function creerCompte() {
-  const nom = document.getElementById('creerNom').value.trim();
-  const numero = document.getElementById('creerNumero').value.trim();
-  const type_compte = document.getElementById('creerType').value;
-  const solde_initial = parseFloat(document.getElementById('creerSolde').value) || 0;
-  const email = document.getElementById('creerEmail').value.trim() || null;
-  if (!nom || !numero) return showMsg('Nom et numéro requis', 'error');
+async function creerCompteEtConnecter() {
+  const nom = document.getElementById('regNom').value.trim();
+  const numero_mtn = document.getElementById('regNumero').value.trim();
+  const type_compte = document.getElementById('regType').value;
+  const pin = document.getElementById('regPin').value.trim();
+  const email = document.getElementById('regEmail').value.trim() || null;
+  const solde_initial = parseFloat(document.getElementById('regSolde').value) || 0;
+
+  if (!nom || !numero_mtn || !pin) return showMsgLogin('Nom, numéro et PIN requis', 'error');
+  if (!/^\d{4,6}$/.test(pin)) return showMsgLogin('Le PIN doit contenir 4 à 6 chiffres', 'error');
+
   try {
-    await apiCall('/api/comptes', 'POST', { numero_mtn: numero, nom, type_compte, solde_initial, email }, true);
-    showMsg(`✓ ${nom}`, 'success');
-    document.getElementById('numeroMtn').value = numero;
-    chargerCompte();
+    await apiCall('/api/comptes', 'POST', { numero_mtn, nom, type_compte, solde_initial, email, pin });
+    showMsgLogin('Compte créé ! Connexion...', 'success');
+    document.getElementById('loginNumero').value = numero_mtn;
+    document.getElementById('loginPin').value = pin;
+    setTimeout(seConnecter, 800);
+  } catch (e) {
+    showMsgLogin(e.message, 'error');
+  }
+}
+
+function seDeconnecter() {
+  authToken = null; currentNumero = null; isAdmin = false;
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentNumero');
+  localStorage.removeItem('isAdmin');
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+async function demarrerApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  document.getElementById('transfertAgent').value = currentNumero;
+  document.getElementById('retraitClient').value = currentNumero;
+
+  if (isAdmin) {
+    document.getElementById('adminBanner').classList.remove('hidden');
+    document.getElementById('tab-admin').classList.remove('hidden');
+  }
+
+  buildLangSelector();
+  applyTranslations();
+  await chargerMonCompte();
+}
+
+async function chargerMonCompte() {
+  try {
+    const compte = await apiCall(`/api/comptes/${currentNumero}`, 'GET', null, true);
+    document.getElementById('soldeAffiche').textContent = new Intl.NumberFormat('fr-FR').format(compte.solde) + ' XAF';
+    document.getElementById('nomAffiche').textContent = `${compte.nom} • ${compte.type_compte}`;
   } catch (e) {
     showMsg(e.message, 'error');
+    if (e.message.includes('expirée') || e.message.includes('invalide')) seDeconnecter();
   }
+}
+
+function switchTab(name) {
+  ['transfert','retrait','historique','admin'].forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'historique') chargerHistorique();
+  if (name === 'admin') chargerAdmin();
 }
 
 async function effectuerTransfert() {
-  const numero_mtn_agent = document.getElementById('transfertAgent').value.trim();
   const numero_mtn_client = document.getElementById('transfertClient').value.trim();
   const montant = parseFloat(document.getElementById('transfertMontant').value);
-  if (!numero_mtn_agent || !numero_mtn_client || !montant) return showMsg('Champs requis', 'error');
+  if (!numero_mtn_client || !montant) return showMsg('Champs requis', 'error');
   try {
-    const res = await apiCall('/api/transferts', 'POST', { numero_mtn_agent, numero_mtn_client, montant }, true);
+    const res = await apiCall('/api/transferts', 'POST', { numero_mtn_agent: currentNumero, numero_mtn_client, montant }, true);
     showMsg(`✓ Frais: ${res.details.frais} XAF`, 'success');
-    chargerCompte();
-  } catch (e) {
-    showMsg(e.message, 'error');
-  }
+    chargerMonCompte();
+  } catch (e) { showMsg(e.message, 'error'); }
 }
 
 async function effectuerRetrait() {
-  const numero_mtn_client = document.getElementById('retraitClient').value.trim();
   const numero_mtn_agent = document.getElementById('retraitAgent').value.trim();
   const montant = parseFloat(document.getElementById('retraitMontant').value);
-  if (!numero_mtn_client || !numero_mtn_agent || !montant) return showMsg('Champs requis', 'error');
+  if (!numero_mtn_agent || !montant) return showMsg('Champs requis', 'error');
   try {
-    const res = await apiCall('/api/retraits', 'POST', { numero_mtn_client, numero_mtn_agent, montant }, true);
+    const res = await apiCall('/api/retraits', 'POST', { numero_mtn_client: currentNumero, numero_mtn_agent, montant }, true);
     showMsg(`✓ Frais: ${res.details.frais} XAF`, 'success');
-    chargerCompte();
-  } catch (e) {
-    showMsg(e.message, 'error');
-  }
+    chargerMonCompte();
+  } catch (e) { showMsg(e.message, 'error'); }
 }
 
 async function chargerHistorique() {
-  const numero = document.getElementById('numeroMtn').value.trim();
   const list = document.getElementById('historiqueList');
-  if (!numero) return;
   try {
-    const res = await apiCall(`/api/historique/${numero}`);
+    const res = await apiCall(`/api/historique/${currentNumero}`, 'GET', null, true);
     if (res.historique.length === 0) { list.innerHTML = '—'; return; }
     list.innerHTML = res.historique.map(t => `
       <div class="txn">
         <div>
           <div>${t.type_operation}</div>
-          <div style="color:#94a3b8;font-size:0.75rem;">${new Date(t.date_creation).toLocaleString()}</div>
+          <div style="color:var(--text-muted);font-size:0.75rem;">${new Date(t.date_creation).toLocaleString()}</div>
         </div>
-        <div style="color:${t.status === 'COMPLETED' ? '#4ade80' : '#facc15'};">
+        <div style="color:${t.status === 'COMPLETED' ? '#6EE7C5' : '#facc15'};">
           ${new Intl.NumberFormat('fr-FR').format(t.montant)} XAF
         </div>
       </div>
     `).join('');
-  } catch (e) {
-    list.innerHTML = 'Erreur';
-  }
+  } catch (e) { list.innerHTML = 'Erreur'; }
+}
+
+async function chargerAdmin() {
+  const list = document.getElementById('adminCompteList');
+  if (!isAdmin) { list.innerHTML = 'Accès refusé.'; return; }
+  try {
+    const res = await apiCall('/api/comptes', 'GET', null, true);
+    list.innerHTML = res.comptes.map(c => `
+      <div class="txn">
+        <div>
+          <div>${c.nom} (${c.type_compte})</div>
+          <div style="color:var(--text-muted);font-size:0.75rem;">${c.numero_mtn}</div>
+        </div>
+        <div>${new Intl.NumberFormat('fr-FR').format(c.solde)} XAF</div>
+      </div>
+    `).join('');
+  } catch (e) { list.innerHTML = 'Erreur: ' + e.message; }
 }
 
 // ============================================================================
-// WALLET CRYPTO (Trust Wallet / MetaMask via injected provider — vanilla JS)
+// WALLET CRYPTO
 // ============================================================================
 let walletAddress = null;
 
 async function connecterWallet() {
   const eth = window.ethereum;
-  if (!eth) {
-    showMsg("Aucun wallet détecté. Ouvre cette page dans le navigateur intégré de Trust Wallet.", 'error');
-    return;
-  }
-  const numero = document.getElementById('numeroMtn').value.trim();
-  if (!numero) {
-    showMsg("Charge d'abord un compte avant de connecter un wallet.", 'error');
-    return;
-  }
+  if (!eth) { showMsg("Aucun wallet détecté. Ouvre cette page dans Trust Wallet.", 'error'); return; }
   try {
     const comptes = await eth.request({ method: 'eth_requestAccounts' });
     walletAddress = comptes[0];
     document.getElementById('walletDisconnected').classList.add('hidden');
     document.getElementById('walletConnected').classList.remove('hidden');
-    document.getElementById('walletAddress').textContent =
-      '✓ ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    document.getElementById('walletAddress').textContent = '✓ ' + walletAddress.slice(0,6) + '...' + walletAddress.slice(-4);
     localStorage.setItem('walletAddress', walletAddress);
 
-    // Signature de propriété + liaison au compte côté serveur
-    const message = `TRANSFER Platform - Lier ce wallet au compte ${numero}\nHorodatage: ${Date.now()}`;
-    const signature = await eth.request({
-      method: 'personal_sign',
-      params: [message, walletAddress]
-    });
+    const message = `TRANSFER Platform - Lier ce wallet au compte ${currentNumero}\nHorodatage: ${Date.now()}`;
+    const signature = await eth.request({ method: 'personal_sign', params: [message, walletAddress] });
 
     await fetch(API_URL + '/api/wallets/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ numero_mtn: numero, wallet_address: walletAddress, message, signature })
+      body: JSON.stringify({ numero_mtn: currentNumero, wallet_address: walletAddress, message, signature })
     });
-
-    showMsg('Wallet connecté et lié au compte', 'success');
-
-    eth.on && eth.on('accountsChanged', (accs) => {
-      if (accs.length === 0) deconnecterWallet();
-      else {
-        walletAddress = accs[0];
-        document.getElementById('walletAddress').textContent =
-          '✓ ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-      }
-    });
-  } catch (e) {
-    showMsg(e.message, 'error');
-  }
+    showMsg('Wallet connecté et lié', 'success');
+  } catch (e) { showMsg(e.message, 'error'); }
 }
-
 function deconnecterWallet() {
   walletAddress = null;
   localStorage.removeItem('walletAddress');
@@ -744,22 +679,14 @@ function deconnecterWallet() {
   document.getElementById('walletConnected').classList.add('hidden');
 }
 
-// Reconnexion silencieuse si déjà connecté précédemment
-(async function restaurerWallet() {
-  const saved = localStorage.getItem('walletAddress');
-  if (saved && window.ethereum) {
-    try {
-      const comptes = await window.ethereum.request({ method: 'eth_accounts' });
-      if (comptes.includes(saved)) {
-        walletAddress = saved;
-        document.getElementById('walletDisconnected').classList.add('hidden');
-        document.getElementById('walletConnected').classList.remove('hidden');
-        document.getElementById('walletAddress').textContent =
-          '✓ ' + saved.slice(0, 6) + '...' + saved.slice(-4);
-      }
-    } catch (e) { /* silencieux */ }
-  }
-})();
+// ============================================================================
+// DÉMARRAGE
+// ============================================================================
+if (authToken && currentNumero) {
+  demarrerApp();
+} else {
+  buildLangSelector();
+}
 </script>
 </body>
 </html>
