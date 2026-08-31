@@ -113,6 +113,17 @@ async def creer_compte(compte: CompteCreate, api_key = Depends(verify_api_key)):
         )
         
         if success:
+            try:
+                from transfer_hubspot import creer_contact
+                creer_contact(
+                    numero_mtn=compte.numero_mtn,
+                    nom=compte.nom,
+                    type_compte=compte.type_compte,
+                    email=compte.email
+                )
+            except Exception as hubspot_error:
+                print(f"⚠️ Création contact HubSpot échouée (compte créé quand même): {hubspot_error}")
+
             return {
                 "success": True,
                 "message": f"Compte créé: {compte.numero_mtn}",
