@@ -347,8 +347,70 @@ async def webhook_stripe(request: Request):
     return {"success": True}
 
 # ============================================================================
-# ENDPOINTS - SANTÉ
+# ENDPOINTS - MTN MOBILE MONEY
 # ============================================================================
+
+@app.post("/api/mtn/demander-paiement", tags=["MTN Mobile Money"])
+async def mtn_demander_paiement(numero_mtn_client: str, montant: float,
+                                 devise: str = "XAF",
+                                 api_key = Depends(verify_api_key)):
+    """Envoie une demande de paiement au client (il approuve sur son téléphone)"""
+    from transfer_mtn import demander_paiement, MTN_ENABLED
+
+    if not MTN_ENABLED:
+        raise HTTPException(status_code=503, detail="MTN Mobile Money non configuré sur ce serveur")
+
+    try:
+        return demander_paiement(numero_mtn_client, montant, devise, numero_mtn_client)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/mtn/statut/{reference_id}", tags=["MTN Mobile Money"])
+async def mtn_statut(reference_id: str):
+    """Vérifie le statut d'une demande de paiement MTN"""
+    from transfer_mtn import verifier_statut_paiement, MTN_ENABLED
+
+    if not MTN_ENABLED:
+        raise HTTPException(status_code=503, detail="MTN Mobile Money non configuré sur ce serveur")
+
+    try:
+        statut = verifier_statut_paiement(reference_id)
+        # Si le paiement est confirmé, on crédite automatiquement le compte
+        if statut.get("status") == "SUCCESSFUL":
+            numero_mtn = statut.get("payer", {}).get("partyId")
+            montant = float(statut.get("amount", 0))
+            if numero_mtn and montant > 0:
+                manager.effectuer_depot(numero_mtn, montant)
+        return statut
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# ENDPOINTS - WALLET CRYPTO
+# ============================================================================
+
+class WalletLinkRequest(BaseModel):
+    numero_mtn: str
+    wallet_address: str
+    message: str
+    signature: str
+
+@app.post("/api/wallets/link", tags=["Wallet"])
+async def lier_wallet(req: WalletLinkRequest):
+    """Lie une adresse wallet crypto à un compte TRANSFER"""
+    compte = manager.obtenir_compte(req.numero_mtn)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte non trouvé")
+
+    success = manager.lier_wallet(req.numero_mtn, req.wallet_address)
+    if not success:
+        raise HTTPException(status_code=500, detail="Échec de la liaison du wallet")
+
+    return {"success": True, "numero_mtn": req.numero_mtn, "wallet_address": req.wallet_address}
+
+
 
 @app.get("/health", tags=["Health"])
 async def health_check():
