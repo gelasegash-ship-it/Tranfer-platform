@@ -467,6 +467,28 @@ class LoginRequest(BaseModel):
     numero_mtn: str
     pin: str
 
+# ============================================================================
+# ENDPOINTS - ABONNEMENT PREMIUM
+# ============================================================================
+
+@app.post("/api/abonnement/souscrire", tags=["Abonnement"])
+async def souscrire_abonnement(current = Depends(get_current_account)):
+    """Souscrit ou prolonge l'abonnement Premium du compte connecté (2000 XAF / 30 jours)"""
+    success, result = manager.souscrire_premium(current["numero_mtn"])
+    if not success:
+        raise HTTPException(status_code=400, detail=result)
+    return {"success": True, "abonnement_expire": result}
+
+
+@app.get("/api/admin/revenus", tags=["Authentification"])
+async def obtenir_revenus_plateforme(current = Depends(get_current_account)):
+    """Affiche le solde total accumulé par la plateforme (frais + abonnements). Admin uniquement."""
+    if not current["is_admin"]:
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")
+    solde = manager.obtenir_solde("PLATFORM_REVENUE")
+    return {"revenus_totaux": solde, "devise": "XAF"}
+
+
 @app.post("/api/auth/login", tags=["Authentification"])
 async def login(req: LoginRequest):
     """Connexion par numéro MTN + PIN, retourne un token de session"""
