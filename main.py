@@ -15,6 +15,7 @@ from datetime import datetime
 import hashlib
 import hmac
 from transfer_backend_sqlite import TransfertManager, TypeOperation
+from transfer_auth import hash_pin, verifier_pin, creer_token, decoder_token
 
 # ============================================================================
 # CONFIGURATION
@@ -530,7 +531,8 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "3.0.0",
-        "database": "connected"
+        "database": "connected",
+        "auth_module_loaded": True
     }
 
 @app.get("/api/stats", tags=["Stats"])
